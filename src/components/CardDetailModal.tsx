@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Calendar, User, Tag, Paperclip, CheckSquare, MessageSquare, Plus, Edit2, Trash2, Save, ArrowRight } from 'lucide-react';
-import { useTrellinho } from '@/hooks/useTrellinho';
+import { useKazuFlow } from '@/hooks/useKazuFlow';
 import { DatePicker } from './DatePicker';
 import { LabelManager } from './LabelManager';
 import { CardMoveDialog } from './CardMoveDialog';
@@ -53,7 +53,7 @@ export const CardDetailModal: React.FC<CardDetailModalProps> = ({ card, boardId,
     setCardDueDate,
     getBoardLabels,
     loading 
-  } = useTrellinho();
+  } = useKazuFlow();
 
   useEffect(() => {
     loadCardDetails();

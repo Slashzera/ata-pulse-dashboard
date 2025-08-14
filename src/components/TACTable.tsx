@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Trash, Download, Search, FileText, AlertTriangle, Loader2, Edit, Eye, Paperclip } from 'lucide-react';
+import { ArrowLeft, Trash, Download, Search, FileText, AlertTriangle, Loader2, Edit, Eye, Paperclip, Filter, SlidersHorizontal, Building2, DollarSign, Calendar, Package, Activity, Sparkles, TrendingUp, BarChart3, Users, Clock, Star } from 'lucide-react';
 import { TAC, useTacs, useDeleteTac } from '@/hooks/useTacs';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -90,166 +90,277 @@ const TACTable: React.FC<TACTableProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="container mx-auto px-3 py-3">
+    <div className="container mx-auto px-6 py-8">
+      {/* Modern Header with Back Button */}
       {onBack && (
-        <div className="mb-3">
-          <Button
-            onClick={onBack}
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-1 hover:bg-pink-50 border-pink-200 text-pink-600 text-xs px-2 py-1"
-          >
-            <ArrowLeft className="h-3 w-3" />
-            Voltar ao Menu Principal
-          </Button>
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => {
+                console.log('BOTÃO VOLTAR CLICADO - FORÇANDO EXECUÇÃO');
+                if (onBack) {
+                  onBack();
+                } else {
+                  console.log('onBack não definido');
+                }
+              }}
+              className="flex items-center gap-3 bg-white hover:bg-pink-50 border border-pink-200 text-pink-600 hover:text-pink-700 px-6 py-3 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer font-medium"
+              style={{ zIndex: 9999, position: 'relative' }}
+            >
+              <ArrowLeft className="h-5 w-5" />
+              <span className="font-medium">Voltar ao Menu Principal</span>
+            </button>
+            <div className="flex items-center gap-3 text-slate-500">
+              <Package className="h-5 w-5" />
+              <span className="text-lg font-semibold">Termos de Aceite de Contratação</span>
+            </div>
+          </div>
         </div>
       )}
 
-      <Card className="shadow-md">
-        <CardHeader className="bg-gradient-to-r from-pink-600 to-fuchsia-600 text-white p-2">
+      {/* Ultra-Modern Header Card */}
+      <Card className="border-0 shadow-xl bg-gradient-to-r from-pink-600 via-purple-700 to-indigo-800 text-white mb-8 overflow-hidden" style={{ position: 'relative', zIndex: 1 }}>
+        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+        <CardHeader className="relative z-10 p-6">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-bold flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Termos de Aceite de Contratação (TACs)
-            </CardTitle>
-            <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-pink-100" />
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+                <FileText className="h-8 w-8" />
+              </div>
+              <div>
+                <CardTitle className="text-2xl font-bold text-white">Termos de Aceite de Contratação</CardTitle>
+                <p className="text-pink-100 text-sm">Gestão completa de TACs e documentos contratuais</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <p className="text-white/90 text-sm font-medium">{filteredTacs.length} TACs</p>
+                <p className="text-pink-200 text-xs">encontrados</p>
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
+
+      {/* Modern Search and Filters */}
+      <Card className="border-0 shadow-lg bg-gradient-to-r from-slate-50 to-gray-50 mb-8">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-pink-100 rounded-lg">
+              <Search className="h-5 w-5 text-pink-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-700">Pesquisa Avançada</h3>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
               <Input
                 type="search"
-                placeholder="Pesquisar por empresa, processo..."
-                className="w-64 h-7 text-xs rounded-md bg-white/10 text-white placeholder:text-pink-100 border-none pl-8 shadow-inner focus:ring-fuchsia-400 focus:ring-offset-0"
+                placeholder="Pesquisar por empresa, processo ou criador..."
+                className="w-full pl-10 pr-4 py-3 border-slate-200 focus:border-pink-500 focus:ring-pink-500/20 rounded-xl transition-colors"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Nome da Empresa
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Nº do Processo
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Data de Entrada
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Assunto/Objeto
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Nº Nota's
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Valor
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Unidade Beneficiada
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Criado Por
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Data de Criação
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={10} className="text-center py-10">
-                      <div className="flex justify-center items-center gap-2 text-gray-500">
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                        <span>Carregando TACs...</span>
-                      </div>
-                    </td>
-                  </tr>
-                ) : isError ? (
-                  <tr>
-                    <td colSpan={10} className="text-center py-10">
-                      <div className="flex flex-col justify-center items-center gap-2 text-red-500">
-                        <div className="flex items-center gap-2">
-                          <AlertTriangle className="h-5 w-5" />
-                          <span>Erro ao carregar os dados.</span>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {error instanceof Error ? error.message : 'Ocorreu um erro desconhecido.'}
-                        </p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : filteredTacs.length === 0 ? (
-                  <tr>
-                    <td colSpan={10} className="text-center py-10 text-gray-500">
-                      Nenhum Termo de Aceite de Contratação encontrado.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredTacs.map(tac => (
-                    <tr key={tac.id} className="hover:bg-gray-50">
-                      <td className="px-3 py-2 whitespace-nowrap">
-                        <div className="flex gap-1">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => handleView(tac)} 
-                            className="text-blue-600 hover:text-blue-800 p-1 h-6 w-6"
-                            title="Visualizar"
-                          >
-                            <Eye className="h-3 w-3" />
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => handleEdit(tac)} 
-                            className="text-green-600 hover:text-green-800 p-1 h-6 w-6"
-                            title="Editar"
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => handleDownload(tac.arquivo_url)} 
-                            className="text-purple-600 hover:text-purple-800 p-1 h-6 w-6"
-                            title="Download"
-                          >
-                            <Download className="h-3 w-3" />
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => handleDelete(tac.id, tac.arquivo_url)} 
-                            className="text-red-600 hover:text-red-800 p-1 h-6 w-6" 
-                            disabled={deleteTacMutation.isPending}
-                            title="Excluir"
-                          >
-                            <Trash className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{tac.nome_empresa}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{tac.numero_processo}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{new Date(tac.data_entrada + 'T00:00:00').toLocaleDateString()}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{tac.assunto_objeto}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{tac.n_notas}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(tac.valor)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{tac.unidade_beneficiada}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{tac.profiles?.nome || 'N/A'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{new Date(tac.created_at).toLocaleDateString()}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+            
+            <div className="bg-white rounded-lg p-4 border border-slate-200 min-w-[120px]">
+              <div className="flex items-center gap-2 mb-2">
+                <Activity className="h-4 w-4 text-pink-600" />
+                <span className="text-sm font-medium text-slate-700">Resultados</span>
+              </div>
+              <p className="text-lg font-bold text-pink-600">{filteredTacs.length}</p>
+              <p className="text-xs text-slate-500">TACs encontrados</p>
+            </div>
           </div>
         </CardContent>
       </Card>
+      {/* Ultra-Modern TAC Cards Grid */}
+      {isLoading ? (
+        <div className="text-center py-16">
+          <div className="mx-auto w-24 h-24 bg-gradient-to-br from-pink-100 to-purple-100 rounded-full flex items-center justify-center mb-6">
+            <Loader2 className="h-12 w-12 text-pink-600 animate-spin" />
+          </div>
+          <h3 className="text-xl font-semibold text-slate-700 mb-2">Carregando TACs...</h3>
+          <p className="text-slate-500">Aguarde enquanto buscamos os dados</p>
+        </div>
+      ) : isError ? (
+        <div className="text-center py-16">
+          <div className="mx-auto w-24 h-24 bg-gradient-to-br from-red-100 to-orange-100 rounded-full flex items-center justify-center mb-6">
+            <AlertTriangle className="h-12 w-12 text-red-600" />
+          </div>
+          <h3 className="text-xl font-semibold text-slate-700 mb-2">Erro ao carregar dados</h3>
+          <p className="text-slate-500 mb-4">
+            {error instanceof Error ? error.message : 'Ocorreu um erro desconhecido'}
+          </p>
+        </div>
+      ) : filteredTacs.length === 0 ? (
+        <div className="text-center py-16">
+          <div className="mx-auto w-24 h-24 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center mb-6">
+            <FileText className="h-12 w-12 text-slate-400" />
+          </div>
+          <h3 className="text-xl font-semibold text-slate-700 mb-2">Nenhum TAC encontrado</h3>
+          <p className="text-slate-500 mb-6">
+            {searchQuery 
+              ? "Tente ajustar os termos de pesquisa para encontrar os TACs desejados."
+              : "Ainda não há Termos de Aceite de Contratação cadastrados no sistema."
+            }
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          {filteredTacs.map(tac => (
+            <Card key={tac.id} className="group relative overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] bg-white">
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-white opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              
+              <CardHeader className="text-white bg-gradient-to-r from-pink-600 to-purple-700 relative z-10">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-3 text-lg font-semibold">
+                    <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                      <Building2 className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <div className="text-lg truncate max-w-[200px]" title={tac.nome_empresa}>
+                        {tac.nome_empresa}
+                      </div>
+                      <div className="text-xs opacity-90 font-normal">
+                        TAC #{tac.id.slice(-8)}
+                      </div>
+                    </div>
+                  </CardTitle>
+                </div>
+              </CardHeader>
+              
+              <CardContent className="p-6 relative z-10">
+                <div className="space-y-4">
+                  {/* Processo e Data */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
+                      <div className="flex items-center gap-2 mb-1">
+                        <FileText className="h-3 w-3 text-blue-600" />
+                        <span className="text-xs font-medium text-blue-700">Processo</span>
+                      </div>
+                      <p className="text-sm font-semibold text-blue-800 truncate" title={tac.numero_processo}>
+                        {tac.numero_processo}
+                      </p>
+                    </div>
+                    
+                    <div className="bg-green-50 rounded-lg p-3 border border-green-100">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Calendar className="h-3 w-3 text-green-600" />
+                        <span className="text-xs font-medium text-green-700">Data Entrada</span>
+                      </div>
+                      <p className="text-sm font-semibold text-green-800">
+                        {new Date(tac.data_entrada + 'T00:00:00').toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Valor */}
+                  <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg p-4 border border-emerald-100">
+                    <div className="flex justify-between items-center">
+                      <span className="text-emerald-700 font-medium flex items-center gap-2">
+                        <DollarSign className="h-4 w-4" />
+                        Valor do TAC
+                      </span>
+                      <span className="font-bold text-xl text-emerald-800">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(tac.valor)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Assunto/Objeto */}
+                  <div className="bg-amber-50 rounded-lg p-4 border border-amber-100">
+                    <div className="text-sm text-amber-800">
+                      <div className="font-semibold mb-2 flex items-center gap-2">
+                        <Star className="h-4 w-4" />
+                        Assunto/Objeto
+                      </div>
+                      <p className="text-amber-700 leading-relaxed line-clamp-2" title={tac.assunto_objeto}>
+                        {tac.assunto_objeto}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Informações Adicionais */}
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <span className="text-slate-600 font-medium">Nº Notas:</span>
+                      <p className="text-slate-800 font-semibold">{tac.n_notas}</p>
+                    </div>
+                    <div>
+                      <span className="text-slate-600 font-medium">Unidade:</span>
+                      <p className="text-slate-800 font-semibold truncate" title={tac.unidade_beneficiada}>
+                        {tac.unidade_beneficiada}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Criado por */}
+                  <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
+                    <div className="flex items-center justify-between text-xs">
+                      <div>
+                        <span className="text-slate-600">Criado por:</span>
+                        <p className="text-slate-800 font-medium">{tac.profiles?.nome || 'N/A'}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-slate-600">Em:</span>
+                        <p className="text-slate-800 font-medium">
+                          {new Date(tac.created_at).toLocaleDateString('pt-BR')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 pt-4 border-t border-slate-100">
+                    <Button 
+                      className="flex-1 bg-gradient-to-r from-pink-600 to-purple-700 hover:shadow-lg text-white border-0 transition-all duration-300"
+                      onClick={() => handleView(tac)}
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      Detalhes
+                    </Button>
+                    
+                    <div className="flex gap-1">
+                      <Button 
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEdit(tac)}
+                        className="hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 transition-colors"
+                        title="Editar TAC"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      
+                      <Button 
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDownload(tac.arquivo_url)}
+                        className="hover:bg-purple-50 hover:border-purple-200 hover:text-purple-600 transition-colors"
+                        title="Download PDF"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      
+                      <Button 
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDelete(tac.id, tac.arquivo_url)}
+                        className="hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors"
+                        title="Excluir TAC"
+                        disabled={deleteTacMutation.isPending}
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
       
       <EditTACDialog
         tac={selectedTacToEdit}

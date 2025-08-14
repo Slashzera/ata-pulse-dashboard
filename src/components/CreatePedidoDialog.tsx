@@ -96,7 +96,7 @@ const CreatePedidoDialog: React.FC<CreatePedidoDialogProps> = ({
               <SelectContent>
                 {atasComSaldo.map((ata) => (
                   <SelectItem key={ata.id} value={ata.id}>
-                    {ata.n_ata} - {ata.favorecido} (Saldo: {formatCurrency(ata.saldo_disponivel || 0)})
+                    ATA {ata.n_ata} - Proc. {ata.processo_adm || 'N/A'} - {ata.favorecido} (Saldo: {formatCurrency(ata.saldo_disponivel || 0)})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -104,6 +104,7 @@ const CreatePedidoDialog: React.FC<CreatePedidoDialogProps> = ({
             {selectedAta && (
               <div className="mt-2 p-3 bg-gray-50 rounded-md">
                 <p className="text-sm"><strong>Número da ATA:</strong> {selectedAta.n_ata}</p>
+                <p className="text-sm"><strong>Processo Administrativo:</strong> {selectedAta.processo_adm || 'N/A'}</p>
                 <p className="text-sm"><strong>Favorecido:</strong> {selectedAta.favorecido}</p>
                 <p className="text-sm"><strong>Saldo Disponível:</strong> {formatCurrency(selectedAta.saldo_disponivel || 0)}</p>
               </div>

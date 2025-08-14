@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, ChevronDown } from 'lucide-react';
-import { useTrellinho } from '@/hooks/useTrellinho';
+import { useKazuFlow } from '@/hooks/useKazuFlow';
 import CurrencyInput from './CurrencyInput';
 
 interface BoardType {
@@ -51,7 +51,7 @@ export const CreateBoardDialog: React.FC<CreateBoardDialogProps> = ({ onClose, o
   const [processValue, setProcessValue] = useState<string>('');
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
 
-  const { getBoardTypes, loading } = useTrellinho();
+  const { getBoardTypes, loading } = useKazuFlow();
 
   useEffect(() => {
     loadBoardTypes();

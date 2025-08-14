@@ -28,12 +28,24 @@ const Index = () => {
   const [isCreateATADialogOpen, setIsCreateATADialogOpen] = useState(false);
   const [showTACDialog, setShowTACDialog] = useState(false);
   const [currentView, setCurrentView] = useState('dashboard');
+
+  // Debug logs para os estados dos diálogos
+  React.useEffect(() => {
+    console.log('Estados dos diálogos:', {
+      isCreateATADialogOpen,
+      isAdesaoDialogOpen,
+      isContratoAntigoDialogOpen,
+      isAquisicaoGlobalDialogOpen,
+      currentView
+    });
+  }, [isCreateATADialogOpen, isAdesaoDialogOpen, isContratoAntigoDialogOpen, isAquisicaoGlobalDialogOpen, currentView]);
   const [processoSearch, setProcessoSearch] = useState('');
   const createTacMutation = useCreateTac();
 
   // Efeito para ouvir o evento de abertura do modal do TAC
   React.useEffect(() => {
     const handleOpenTACModal = () => {
+      console.log('EVENTO TAC RECEBIDO - ABRINDO MODAL');
       setShowTACDialog(true);
     };
 
@@ -106,39 +118,54 @@ const Index = () => {
       <div className="container mx-auto px-6 py-8">
         <ExpirationAlerts atas={atas} />
         
-        <div className="flex gap-3 mb-6">
-          <Button 
-            onClick={() => setIsCreateATADialogOpen(true)}
-            className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border-0"
-          >
-            <Plus className="h-4 w-4 mr-2 drop-shadow-sm" />
-            Nova ATA
-          </Button>
-          
-          <Button 
-            onClick={() => setIsAdesaoDialogOpen(true)}
-            className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border-0"
-          >
-            <UserPlus className="h-4 w-4 mr-2 drop-shadow-sm" />
-            Nova Adesão
-          </Button>
-          
-          <Button 
-            onClick={() => setIsContratoAntigoDialogOpen(true)}
-            className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border-0"
-          >
-            <FileText className="h-4 w-4 mr-2 drop-shadow-sm" />
-            Novo Saldo de Atas (Contratos Antigos)
-          </Button>
-          
-          <Button 
-            onClick={() => setIsAquisicaoGlobalDialogOpen(true)}
-            className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border-0"
-          >
-            <Globe className="h-4 w-4 mr-2 drop-shadow-sm" />
-            Nova Aquisição Global
-          </Button>
-        </div>
+        {/* Botões de criação - visíveis apenas na dashboard principal */}
+        {currentView === 'dashboard' && (
+          <div className="flex gap-3 mb-6">
+            <Button 
+              onClick={() => {
+                console.log('Botão Nova ATA clicado');
+                setIsCreateATADialogOpen(true);
+              }}
+              className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border-0"
+            >
+              <Plus className="h-4 w-4 mr-2 drop-shadow-sm" />
+              Nova ATA
+            </Button>
+            
+            <Button 
+              onClick={() => {
+                console.log('Botão Nova Adesão clicado');
+                setIsAdesaoDialogOpen(true);
+              }}
+              className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border-0"
+            >
+              <UserPlus className="h-4 w-4 mr-2 drop-shadow-sm" />
+              Nova Adesão
+            </Button>
+            
+            <Button 
+              onClick={() => {
+                console.log('Botão Novo Saldo de Atas clicado');
+                setIsContratoAntigoDialogOpen(true);
+              }}
+              className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border-0"
+            >
+              <FileText className="h-4 w-4 mr-2 drop-shadow-sm" />
+              Novo Saldo de Atas (Contratos Antigos)
+            </Button>
+            
+            <Button 
+              onClick={() => {
+                console.log('Botão Nova Aquisição Global clicado');
+                setIsAquisicaoGlobalDialogOpen(true);
+              }}
+              className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border-0"
+            >
+              <Globe className="h-4 w-4 mr-2 drop-shadow-sm" />
+              Nova Aquisição Global
+            </Button>
+          </div>
+        )}
         
         {/* Barra de pesquisa de processos administrativos */}
         <div className="mb-6">

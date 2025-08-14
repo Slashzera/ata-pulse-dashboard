@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Plus, MoreHorizontal, X, Edit2, Trash2, MessageSquare, Copy, Archive } from 'lucide-react';
 import { TrelloCard } from './TrelloCard';
 import { CreateCardDialog } from './CreateCardDialog';
-import { useTrellinho } from '@/hooks/useTrellinho';
+import { useKazuFlow } from '@/hooks/useKazuFlow';
 import { DroppableList } from './dnd/DroppableList';
 
 interface List {
@@ -35,7 +35,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({ list, boardId }) => {
   const [editTitle, setEditTitle] = useState(list.title);
   const [showComments, setShowComments] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const { createCard, fetchBoardDetails, updateList, archiveList } = useTrellinho();
+  const { createCard, fetchBoardDetails, updateList, archiveList } = useKazuFlow();
 
   const handleCreateCard = async (cardData: { title: string; description?: string }) => {
     try {
@@ -135,7 +135,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({ list, boardId }) => {
   };
 
   return (
-    <div className="bg-gray-100 rounded-lg p-2 w-64 flex-shrink-0 h-full flex flex-col max-h-full">
+    <div className="bg-gray-100 rounded-lg p-3 w-64 flex-shrink-0 h-fit max-h-[calc(100vh-200px)] flex flex-col">
       {/* List Header */}
       <div className="flex items-center justify-between mb-2">
         {isEditingTitle ? (
@@ -213,7 +213,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({ list, boardId }) => {
       </div>
 
       {/* Cards with Drag and Drop - Scroll Vertical */}
-      <div className="flex-1 overflow-y-auto mb-3 min-h-0 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+      <div className="flex-1 overflow-y-auto mb-3 min-h-[50px] max-h-[400px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
         <DroppableList
           list={list}
           boardId={boardId}

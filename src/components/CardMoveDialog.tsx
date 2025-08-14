@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, X } from 'lucide-react';
-import { useTrellinho } from '@/hooks/useTrellinho';
+import { useKazuFlow } from '@/hooks/useKazuFlow';
 
 interface List {
   id: string;
@@ -34,7 +34,7 @@ export const CardMoveDialog: React.FC<CardMoveDialogProps> = ({
   const [selectedListId, setSelectedListId] = useState('');
   const [position, setPosition] = useState<number>(0);
 
-  const { fetchBoards, fetchBoardDetails, moveCardToList, loading } = useTrellinho();
+  const { fetchBoards, fetchBoardDetails, moveCardToList, loading } = useKazuFlow();
 
   useEffect(() => {
     loadBoards();

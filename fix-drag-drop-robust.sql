@@ -243,4 +243,4 @@ COMMENT ON FUNCTION normalize_list_positions IS 'Normaliza posições sequenciai
 COMMENT ON FUNCTION fix_card_positions IS 'Corrige posições inconsistentes em todas as listas';
 
 -- 7. Mensagem final
-SELECT '🛡️ DRAG AND DROP ROBUSTO IMPLEMENTADO! Agora com proteção contra travamentos!' as resultado;
+SELECT '🛡️ DRAG AND DROP ROBUSTO IMPLEMENTADO! Agora com proteção contra travamentos!' as resultado

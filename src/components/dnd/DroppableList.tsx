@@ -25,7 +25,7 @@ export const DroppableList: React.FC<DroppableListProps> = ({
   return (
     <div
       ref={setNodeRef}
-      className={`min-h-[100px] transition-colors ${
+      className={`min-h-[20px] transition-colors ${
         isOver ? 'bg-blue-50 ring-2 ring-blue-200' : ''
       }`}
     >

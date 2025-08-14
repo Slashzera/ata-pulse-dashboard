@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import { LogOut, Database, Users, Key, Heart, Shield, Clock, Trash2 } from 'lucide-react';
+import { LogOut, Database, Users, Key, Heart, Shield, Clock, Trash2, ChevronDown, Settings, FileText, BarChart3, Menu, X } from 'lucide-react';
 import BackupDialog from '@/components/BackupDialog';
 import ExportToPDF from '@/components/ExportToPDF';
 import ExportCategoryReport from '@/components/ExportCategoryReport';
@@ -23,6 +23,8 @@ const Header: React.FC<HeaderProps> = ({ onReturnToMain }) => {
   const [isUserManagementOpen, setIsUserManagementOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isTrashOpen, setIsTrashOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleSignOut = () => {
     signOut();
@@ -55,121 +57,219 @@ const Header: React.FC<HeaderProps> = ({ onReturnToMain }) => {
 
   return (
     <>
-      <header className="relative bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 text-white shadow-2xl overflow-hidden">
-        {/* Background decorative elements */}
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-3xl"></div>
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400"></div>
+      <header className="relative bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 text-white shadow-2xl border-b border-blue-800/50">
+        {/* Modern gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-indigo-600/5 to-purple-600/10"></div>
         
-        {/* Floating geometric shapes for visual appeal */}
-        <div className="absolute top-4 right-20 w-16 h-16 bg-white/5 rounded-full blur-xl animate-pulse"></div>
-        <div className="absolute bottom-4 left-20 w-12 h-12 bg-purple-300/10 rounded-full blur-lg animate-pulse delay-1000"></div>
+        {/* Subtle animated background pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"></div>
+          <div className="absolute top-0 right-1/4 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl animate-pulse delay-1000"></div>
+        </div>
         
-        <div className="relative container mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
-            {/* Left section - Logo and title */}
-            <div className="flex items-center gap-6">
-              <div className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-r from-red-400 to-pink-400 rounded-full blur-md opacity-75 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="relative bg-white/15 backdrop-blur-sm p-4 rounded-full border border-white/20 group-hover:scale-110 transition-transform duration-300">
-                  <Heart className="h-8 w-8 text-red-300 group-hover:text-red-200 transition-colors duration-300" />
+        <div className="relative container mx-auto px-4 lg:px-6">
+          <div className="flex items-center justify-between h-20">
+            
+            {/* Left section - Logo and brand */}
+            <div className="flex items-center gap-4">
+              <div 
+                className="flex items-center gap-4 cursor-pointer group"
+                onClick={onReturnToMain}
+                title="Clique para voltar ao menu principal"
+              >
+                {/* Modern logo */}
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-pink-500 rounded-2xl blur-lg opacity-75 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="relative bg-gradient-to-r from-red-500 to-pink-500 p-3 rounded-2xl shadow-xl group-hover:scale-110 transition-transform duration-300">
+                    <Heart className="h-7 w-7 text-white" />
+                  </div>
+                </div>
+                
+                {/* Brand text */}
+                <div className="hidden md:block">
+                  <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent group-hover:scale-105 transition-transform duration-300">
+                    Sisgecon Saúde
+                  </h1>
+                  <p className="text-sm text-blue-200/80 font-medium max-w-md">
+                    Sistema de Gestão e Contratos
+                  </p>
                 </div>
               </div>
               
-              <div className="space-y-2">
-                <h1 
-                  className="text-4xl font-bold tracking-wide bg-gradient-to-r from-white via-blue-100 to-purple-100 bg-clip-text text-transparent drop-shadow-2xl cursor-pointer hover:scale-105 transition-all duration-300 hover:drop-shadow-3xl"
-                  onClick={onReturnToMain}
-                  title="Clique para voltar ao menu principal"
-                >
-                  Sisgecon Saúde
-                </h1>
-                <p className="text-blue-100/90 text-sm font-medium max-w-2xl leading-relaxed">
-                  Sistema de Gestão e Contratos - Secretaria Municipal de Saúde de Duque de Caxias
-                </p>
-                <div className="flex items-center gap-2 text-blue-200/80 text-xs">
-                  <Clock className="h-4 w-4" />
-                  <span>{getCurrentDateTime()}</span>
-                </div>
+              {/* Time display - hidden on mobile */}
+              <div className="hidden lg:flex items-center gap-2 ml-8 px-4 py-2 bg-white/5 rounded-full border border-white/10">
+                <Clock className="h-4 w-4 text-blue-300" />
+                <span className="text-sm text-blue-200/90 font-mono">{getCurrentDateTime()}</span>
               </div>
             </div>
             
-            {/* Right section - User info and actions */}
-            <div className="flex flex-col items-end gap-4">
-              {/* User information card */}
-              <div className="bg-white/10 backdrop-blur-md rounded-xl px-5 py-3 border border-white/20 shadow-lg hover:bg-white/15 transition-all duration-300">
-                <div className="flex items-center gap-3">
-                  <div className="bg-gradient-to-r from-blue-400 to-purple-400 p-2 rounded-full">
-                    <Shield className="h-4 w-4 text-white" />
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-white">{getUserName()}</p>
-                    <p className="text-xs text-blue-100/80 font-medium">{user?.email}</p>
-                  </div>
-                </div>
-              </div>
+            {/* Right section - Actions and user */}
+            <div className="flex items-center gap-4">
               
-              {/* Action buttons */}
-              <div className="flex items-center gap-3 flex-wrap">
-                <div className="flex items-center gap-2">
-                  <ExportToPDF atas={atas} pedidos={pedidos} />
-                  <ExportCategoryReport atas={atas} pedidos={pedidos} />
+              {/* Action buttons - hidden on mobile, shown in dropdown */}
+              <div className="hidden lg:flex items-center gap-2">
+                {/* Reports dropdown */}
+                <div className="relative group">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      console.log('Botão Relatórios clicado');
+                    }}
+                    className="text-white hover:bg-white/10 border border-white/20 hover:border-white/30 transition-all duration-200 rounded-xl cursor-pointer"
+                    type="button"
+                  >
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    Relatórios
+                    <ChevronDown className="h-3 w-3 ml-1" />
+                  </Button>
+                  
+                  {/* Dropdown menu */}
+                  <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <div className="px-3 py-2">
+                      <ExportToPDF atas={atas} pedidos={pedidos} />
+                    </div>
+                    <div className="px-3 py-2">
+                      <ExportCategoryReport atas={atas} pedidos={pedidos} />
+                    </div>
+                  </div>
                 </div>
                 
+                {/* System tools */}
                 <Button 
-                  variant="outline" 
+                  variant="ghost" 
                   size="sm"
                   onClick={() => setIsBackupDialogOpen(true)}
-                  className="text-white border-blue-300/80 hover:bg-gradient-to-r hover:from-blue-600/80 hover:to-indigo-600/80 hover:border-blue-200/90 bg-gradient-to-r from-blue-700/90 to-indigo-700/90 backdrop-blur-md font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 rounded-lg"
+                  className="text-white hover:bg-white/10 border border-white/20 hover:border-white/30 transition-all duration-200 rounded-xl"
                 >
-                  <Database className="h-4 w-4 mr-2 text-white" />
-                  Backup Sistema
+                  <Database className="h-4 w-4 mr-2" />
+                  Backup
                 </Button>
 
                 <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setIsChangePasswordOpen(true)}
-                  className="text-white border-purple-300/80 hover:bg-gradient-to-r hover:from-purple-600/80 hover:to-pink-600/80 hover:border-purple-200/90 bg-gradient-to-r from-purple-700/90 to-pink-700/90 backdrop-blur-md font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 rounded-lg"
-                >
-                  <Key className="h-4 w-4 mr-2 text-white" />
-                  Alterar Senha
-                </Button>
-
-                <Button 
-                  variant="outline" 
+                  variant="ghost" 
                   size="sm"
                   onClick={() => setIsTrashOpen(true)}
-                  className="text-white border-orange-300/80 hover:bg-gradient-to-r hover:from-orange-600/80 hover:to-amber-600/80 hover:border-orange-200/90 bg-gradient-to-r from-orange-700/90 to-amber-700/90 backdrop-blur-md font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 rounded-lg"
+                  className="text-white hover:bg-white/10 border border-white/20 hover:border-white/30 transition-all duration-200 rounded-xl"
                 >
-                  <Trash2 className="h-4 w-4 mr-2 text-white" />
+                  <Trash2 className="h-4 w-4 mr-2" />
                   Lixeira
                 </Button>
-
-                {isAdmin && (
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setIsUserManagementOpen(true)}
-                    className="text-white border-emerald-300/80 hover:bg-gradient-to-r hover:from-emerald-600/80 hover:to-teal-600/80 hover:border-emerald-200/90 bg-gradient-to-r from-emerald-700/90 to-teal-700/90 backdrop-blur-md font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 rounded-lg"
-                  >
-                    <Users className="h-4 w-4 mr-2 text-white" />
-                    Gerenciar Usuários
-                  </Button>
-                )}
-                
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={handleSignOut}
-                  className="text-white border-red-300/80 hover:bg-gradient-to-r hover:from-red-600/80 hover:to-rose-600/80 hover:border-red-200/90 bg-gradient-to-r from-red-700/90 to-rose-700/90 backdrop-blur-md font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 rounded-lg"
+              </div>
+              
+              {/* User menu */}
+              <div className="relative">
+                <button
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="flex items-center gap-3 px-4 py-2 bg-white/10 hover:bg-white/15 rounded-xl border border-white/20 hover:border-white/30 transition-all duration-200 group"
                 >
-                  <LogOut className="h-4 w-4 mr-2 text-white" />
-                  Sair
-                </Button>
+                  <div className="flex items-center gap-3">
+                    <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-2 rounded-lg">
+                      <Shield className="h-4 w-4 text-white" />
+                    </div>
+                    <div className="hidden md:block text-left">
+                      <p className="text-sm font-semibold text-white">{getUserName()}</p>
+                      <p className="text-xs text-blue-200/80">{user?.email}</p>
+                    </div>
+                  </div>
+                  <ChevronDown className={`h-4 w-4 text-blue-200 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {/* User dropdown menu */}
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-50">
+                    {/* User info in dropdown */}
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <p className="font-semibold text-gray-900">{getUserName()}</p>
+                      <p className="text-sm text-gray-600">{user?.email}</p>
+                    </div>
+                    
+                    {/* Menu items */}
+                    <div className="py-2">
+                      <button
+                        onClick={() => {
+                          setIsChangePasswordOpen(true);
+                          setIsUserMenuOpen(false);
+                        }}
+                        className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors duration-200"
+                      >
+                        <Key className="h-4 w-4 text-gray-500" />
+                        Alterar Senha
+                      </button>
+                      
+                      {isAdmin && (
+                        <button
+                          onClick={() => {
+                            setIsUserManagementOpen(true);
+                            setIsUserMenuOpen(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors duration-200"
+                        >
+                          <Users className="h-4 w-4 text-gray-500" />
+                          Gerenciar Usuários
+                        </button>
+                      )}
+                      
+                      {/* Mobile-only menu items */}
+                      <div className="lg:hidden border-t border-gray-100 mt-2 pt-2">
+                        <button
+                          onClick={() => {
+                            setIsBackupDialogOpen(true);
+                            setIsUserMenuOpen(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors duration-200"
+                        >
+                          <Database className="h-4 w-4 text-gray-500" />
+                          Backup Sistema
+                        </button>
+                        
+                        <button
+                          onClick={() => {
+                            setIsTrashOpen(true);
+                            setIsUserMenuOpen(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors duration-200"
+                        >
+                          <Trash2 className="h-4 w-4 text-gray-500" />
+                          Lixeira
+                        </button>
+                        
+                        <div className="px-4 py-2">
+                          <ExportToPDF atas={atas} pedidos={pedidos} />
+                        </div>
+                        <div className="px-4 py-2">
+                          <ExportCategoryReport atas={atas} pedidos={pedidos} />
+                        </div>
+                      </div>
+                      
+                      <div className="border-t border-gray-100 mt-2 pt-2">
+                        <button
+                          onClick={() => {
+                            handleSignOut();
+                            setIsUserMenuOpen(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors duration-200"
+                        >
+                          <LogOut className="h-4 w-4 text-red-500" />
+                          Sair do Sistema
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
+        
+        {/* Click outside to close user menu */}
+        {isUserMenuOpen && (
+          <div 
+            className="fixed inset-0 z-40" 
+            onClick={() => setIsUserMenuOpen(false)}
+          ></div>
+        )}
       </header>
 
       <BackupDialog

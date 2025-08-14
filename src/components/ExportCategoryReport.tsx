@@ -14,9 +14,16 @@ interface ExportCategoryReportProps {
   pedidos: Pedido[];
 }
 
+interface VencimentoFilter {
+  value: string;
+  label: string;
+  filterFunction: (ata: ATA, currentDate: Date) => boolean;
+}
+
 const ExportCategoryReport: React.FC<ExportCategoryReportProps> = ({ atas, pedidos }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedFavorecido, setSelectedFavorecido] = useState<string>('');
+  const [selectedVencimento, setSelectedVencimento] = useState<string>('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
@@ -28,20 +35,143 @@ const ExportCategoryReport: React.FC<ExportCategoryReportProps> = ({ atas, pedid
     { value: 'antigo', label: 'Saldo de ATAs' }
   ];
 
+  const vencimentoOptions: VencimentoFilter[] = [
+    {
+      value: 'all',
+      label: 'Todos os vencimentos',
+      filterFunction: () => true
+    },
+    {
+      value: 'vencidas',
+      label: 'ATAs Vencidas',
+      filterFunction: (ata, currentDate) => {
+        if (!ata.vencimento) return false;
+        return new Date(ata.vencimento) < currentDate;
+      }
+    },
+    {
+      value: 'vencendo_30',
+      label: 'Vencendo em 30 dias',
+      filterFunction: (ata, currentDate) => {
+        if (!ata.vencimento) return false;
+        const vencimento = new Date(ata.vencimento);
+        const limite = new Date(currentDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+        return vencimento >= currentDate && vencimento <= limite;
+      }
+    },
+    {
+      value: 'vencendo_60',
+      label: 'Vencendo em 60 dias',
+      filterFunction: (ata, currentDate) => {
+        if (!ata.vencimento) return false;
+        const vencimento = new Date(ata.vencimento);
+        const limite = new Date(currentDate.getTime() + 60 * 24 * 60 * 60 * 1000);
+        return vencimento >= currentDate && vencimento <= limite;
+      }
+    },
+    {
+      value: 'vencendo_90',
+      label: 'Vencendo em 90 dias',
+      filterFunction: (ata, currentDate) => {
+        if (!ata.vencimento) return false;
+        const vencimento = new Date(ata.vencimento);
+        const limite = new Date(currentDate.getTime() + 90 * 24 * 60 * 60 * 1000);
+        return vencimento >= currentDate && vencimento <= limite;
+      }
+    },
+    {
+      value: 'vigentes',
+      label: 'ATAs Vigentes',
+      filterFunction: (ata, currentDate) => {
+        if (!ata.vencimento) return false;
+        return new Date(ata.vencimento) > currentDate;
+      }
+    },
+    {
+      value: 'sem_vencimento',
+      label: 'Sem data de vencimento',
+      filterFunction: (ata) => !ata.vencimento || ata.vencimento.trim() === ''
+    }
+  ];
+
+  // Utility functions for date validation and filtering
+  const isDateValid = (dateString: string): boolean => {
+    if (!dateString || dateString.trim() === '') return false;
+    const date = new Date(dateString);
+    return !isNaN(date.getTime());
+  };
+
+  const filterAtasByVencimento = (atas: ATA[], vencimentoFilter: string): ATA[] => {
+    if (vencimentoFilter === 'all') return atas;
+
+    const currentDate = new Date();
+    const filterOption = vencimentoOptions.find(option => option.value === vencimentoFilter);
+
+    if (!filterOption) return atas;
+
+    return atas.filter(ata => filterOption.filterFunction(ata, currentDate));
+  };
+
+  interface VencimentoStats {
+    vencidas: { count: number; valor: number };
+    vencendo30: { count: number; valor: number };
+    vigentes: { count: number; valor: number };
+    semVencimento: { count: number; valor: number };
+  }
+
+  const calculateVencimentoStats = (atas: ATA[]): VencimentoStats => {
+    const currentDate = new Date();
+    const stats: VencimentoStats = {
+      vencidas: { count: 0, valor: 0 },
+      vencendo30: { count: 0, valor: 0 },
+      vigentes: { count: 0, valor: 0 },
+      semVencimento: { count: 0, valor: 0 }
+    };
+
+    atas.forEach(ata => {
+      const valor = ata.valor || 0;
+
+      if (!ata.vencimento || ata.vencimento.trim() === '') {
+        stats.semVencimento.count++;
+        stats.semVencimento.valor += valor;
+      } else if (isDateValid(ata.vencimento)) {
+        const vencimento = new Date(ata.vencimento);
+        const limite30 = new Date(currentDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+        if (vencimento < currentDate) {
+          stats.vencidas.count++;
+          stats.vencidas.valor += valor;
+        } else if (vencimento <= limite30) {
+          stats.vencendo30.count++;
+          stats.vencendo30.valor += valor;
+        } else {
+          stats.vigentes.count++;
+          stats.vigentes.valor += valor;
+        }
+      } else {
+        // Data inválida, tratar como sem vencimento
+        stats.semVencimento.count++;
+        stats.semVencimento.valor += valor;
+      }
+    });
+
+    return stats;
+  };
+
   // Get unique favorecidos for the selected category, filtering out empty strings
   const getUniqueFavorecidos = () => {
     if (!selectedCategory) return [];
-    
+
     console.log('Buscando favorecidos para categoria:', selectedCategory);
     console.log('Total ATAs disponíveis:', atas.length);
-    
+
     const categoryAtas = atas.filter(ata => ata.category === selectedCategory);
     console.log('ATAs filtradas por categoria:', categoryAtas.length);
-    
+
     const uniqueFavorecidos = [...new Set(categoryAtas.map(ata => ata.favorecido))]
       .filter(favorecido => favorecido && favorecido.trim() !== '')
       .sort();
-    
+
     console.log('Favorecidos únicos encontrados:', uniqueFavorecidos);
     return uniqueFavorecidos;
   };
@@ -63,9 +193,10 @@ const ExportCategoryReport: React.FC<ExportCategoryReportProps> = ({ atas, pedid
     console.log('=== INICIANDO GERAÇÃO DO RELATÓRIO ===');
     console.log('Categoria selecionada:', selectedCategory);
     console.log('Favorecido selecionado:', selectedFavorecido);
+    console.log('Filtro de vencimento selecionado:', selectedVencimento);
     console.log('Total de ATAs disponíveis:', atas.length);
     console.log('Total de pedidos disponíveis:', pedidos.length);
-    
+
     if (!selectedCategory) {
       console.log('Erro: Categoria não selecionada');
       toast({
@@ -84,7 +215,7 @@ const ExportCategoryReport: React.FC<ExportCategoryReportProps> = ({ atas, pedid
         console.log(`Verificando ATA ${ata.n_ata} - Categoria: ${ata.category}`);
         return ata.category === selectedCategory;
       });
-      
+
       console.log('ATAs após filtro de categoria:', filteredAtas.length);
 
       if (selectedFavorecido && selectedFavorecido !== 'all' && selectedFavorecido !== '') {
@@ -95,24 +226,48 @@ const ExportCategoryReport: React.FC<ExportCategoryReportProps> = ({ atas, pedid
         console.log('ATAs após filtro de favorecido:', filteredAtas.length);
       }
 
+      // Apply vencimento filter
+      if (selectedVencimento && selectedVencimento !== 'all') {
+        filteredAtas = filterAtasByVencimento(filteredAtas, selectedVencimento);
+        console.log('ATAs após filtro de vencimento:', filteredAtas.length);
+      }
+
+      // Filter out ATAs with zero balance (saldo zerado)
+      filteredAtas = filteredAtas.filter(ata => {
+        const saldo = ata.saldo_disponivel || 0;
+        return saldo > 0;
+      });
+      console.log('ATAs após filtro de saldo zerado:', filteredAtas.length);
+
+      console.log('Gerando relatório para', filteredAtas.length, 'ATAs');
+
+      // Create HTML report - Define labels first
+      const categoryLabel = categories.find(cat => cat.value === selectedCategory)?.label || selectedCategory;
+      const vencimentoLabel = vencimentoOptions.find(opt => opt.value === selectedVencimento)?.label || 'Todos os vencimentos';
+
       if (filteredAtas.length === 0) {
         console.log('Nenhuma ATA encontrada para os filtros');
+        const filterDescription = [
+          `Categoria: ${categoryLabel}`,
+          selectedFavorecido && selectedFavorecido !== 'all' ? `Favorecido: ${selectedFavorecido}` : null,
+          selectedVencimento && selectedVencimento !== 'all' ? `Vencimento: ${vencimentoLabel}` : null
+        ].filter(Boolean).join(', ');
+
         toast({
-          title: "Aviso",
-          description: "Nenhuma ATA encontrada para os filtros selecionados.",
+          title: "Nenhuma ATA encontrada",
+          description: `Não foram encontradas ATAs para os filtros: ${filterDescription}. Tente ajustar os filtros.`,
           variant: "destructive",
         });
         setIsGenerating(false);
         return;
       }
 
-      console.log('Gerando relatório para', filteredAtas.length, 'ATAs');
-
-      // Create HTML report
-      const categoryLabel = categories.find(cat => cat.value === selectedCategory)?.label || selectedCategory;
       let reportTitle = `Categoria: ${categoryLabel}`;
       if (selectedFavorecido && selectedFavorecido !== 'all' && selectedFavorecido !== '') {
         reportTitle += ` - Favorecido: ${selectedFavorecido}`;
+      }
+      if (selectedVencimento && selectedVencimento !== 'all') {
+        reportTitle += ` - Vencimento: ${vencimentoLabel}`;
       }
 
       // Calculate totals
@@ -122,7 +277,11 @@ const ExportCategoryReport: React.FC<ExportCategoryReportProps> = ({ atas, pedid
         .filter(p => filteredAtas.some(ata => ata.id === p.ata_id))
         .reduce((sum, p) => sum + p.valor, 0);
 
+      // Calculate vencimento statistics
+      const vencimentoStats = calculateVencimentoStats(filteredAtas);
+
       console.log('Totais calculados:', { totalValue, totalSaldo, totalPedidosValue });
+      console.log('Estatísticas de vencimento:', vencimentoStats);
 
       const htmlContent = `
         <!DOCTYPE html>
@@ -193,6 +352,28 @@ const ExportCategoryReport: React.FC<ExportCategoryReportProps> = ({ atas, pedid
                 color: #dc2626; 
                 background-color: #fef2f2; 
               }
+              .vencida {
+                background-color: #fef2f2 !important;
+                color: #dc2626 !important;
+                font-weight: bold;
+              }
+              .vencendo-30 {
+                background-color: #fef3c7 !important;
+                color: #d97706 !important;
+                font-weight: 500;
+              }
+              .vencendo-60 {
+                background-color: #fef3c7 !important;
+                color: #d97706 !important;
+              }
+              .vencendo-90 {
+                background-color: #fef3c7 !important;
+                color: #d97706 !important;
+              }
+              .vigente {
+                background-color: #f0fdf4 !important;
+                color: #16a34a !important;
+              }
               .summary {
                 background-color: #f0f9ff;
                 padding: 20px;
@@ -218,6 +399,50 @@ const ExportCategoryReport: React.FC<ExportCategoryReportProps> = ({ atas, pedid
                 font-weight: bold;
                 font-size: 16px;
                 color: #1e40af;
+              }
+              .vencimento-stats {
+                background-color: #f8fafc;
+                padding: 15px;
+                border-radius: 8px;
+                margin: 20px 0;
+                border: 1px solid #e2e8f0;
+              }
+              .vencimento-stats h4 {
+                margin-top: 0;
+                color: #374151;
+                text-align: center;
+                margin-bottom: 15px;
+              }
+              .stat-item {
+                display: flex;
+                justify-content: space-between;
+                margin: 8px 0;
+                padding: 6px 0;
+                border-bottom: 1px solid #e5e7eb;
+                font-size: 13px;
+              }
+              .stat-item.vencidas {
+                color: #dc2626;
+                font-weight: bold;
+                background-color: #fef2f2;
+                padding: 8px;
+                border-radius: 4px;
+                border: 1px solid #fecaca;
+              }
+              .stat-item.vencendo {
+                color: #d97706;
+                font-weight: 500;
+                background-color: #fef3c7;
+                padding: 8px;
+                border-radius: 4px;
+                border: 1px solid #fed7aa;
+              }
+              .stat-item.vigentes {
+                color: #16a34a;
+                background-color: #f0fdf4;
+                padding: 8px;
+                border-radius: 4px;
+                border: 1px solid #bbf7d0;
               }
               .footer {
                 margin-top: 30px;
@@ -250,10 +475,11 @@ const ExportCategoryReport: React.FC<ExportCategoryReportProps> = ({ atas, pedid
             <div class="filters">
               <h3>Filtros Aplicados:</h3>
               <p><strong>Categoria:</strong> ${categoryLabel}</p>
-              ${selectedFavorecido && selectedFavorecido !== 'all' && selectedFavorecido !== '' ? 
-                `<p><strong>Favorecido:</strong> ${selectedFavorecido}</p>` : 
-                '<p><strong>Favorecido:</strong> Todos</p>'
-              }
+              ${selectedFavorecido && selectedFavorecido !== 'all' && selectedFavorecido !== '' ?
+          `<p><strong>Favorecido:</strong> ${selectedFavorecido}</p>` :
+          '<p><strong>Favorecido:</strong> Todos</p>'
+        }
+              <p><strong>Filtro de Vencimento:</strong> ${vencimentoLabel}</p>
             </div>
 
             <table>
@@ -273,11 +499,41 @@ const ExportCategoryReport: React.FC<ExportCategoryReportProps> = ({ atas, pedid
               </thead>
               <tbody>
                 ${filteredAtas.map(ata => {
-                  const pedidosAta = pedidos.filter(p => p.ata_id === ata.id);
-                  const totalPedidos = pedidosAta.reduce((sum, p) => sum + p.valor, 0);
-                  const saldoStatus = (ata.saldo_disponivel || 0) <= 0 ? 'SALDO ZERADO' : formatCurrency(ata.saldo_disponivel || 0);
-                  
-                  return `
+          const pedidosAta = pedidos.filter(p => p.ata_id === ata.id);
+          const totalPedidos = pedidosAta.reduce((sum, p) => sum + p.valor, 0);
+          const saldoStatus = (ata.saldo_disponivel || 0) <= 0 ? 'SALDO ZERADO' : formatCurrency(ata.saldo_disponivel || 0);
+
+          // Determine vencimento status for styling
+          let vencimentoClass = '';
+          let vencimentoText = formatDate(ata.vencimento);
+
+          if (ata.vencimento && isDateValid(ata.vencimento)) {
+            const currentDate = new Date();
+            const vencimento = new Date(ata.vencimento);
+            const limite30 = new Date(currentDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+            const limite60 = new Date(currentDate.getTime() + 60 * 24 * 60 * 60 * 1000);
+            const limite90 = new Date(currentDate.getTime() + 90 * 24 * 60 * 60 * 1000);
+
+            if (vencimento < currentDate) {
+              vencimentoClass = 'vencida';
+              vencimentoText = `${formatDate(ata.vencimento)} (VENCIDA)`;
+            } else if (vencimento <= limite30) {
+              vencimentoClass = 'vencendo-30';
+              vencimentoText = `${formatDate(ata.vencimento)} (30 dias)`;
+            } else if (vencimento <= limite60) {
+              vencimentoClass = 'vencendo-60';
+              vencimentoText = `${formatDate(ata.vencimento)} (60 dias)`;
+            } else if (vencimento <= limite90) {
+              vencimentoClass = 'vencendo-90';
+              vencimentoText = `${formatDate(ata.vencimento)} (90 dias)`;
+            } else {
+              vencimentoClass = 'vigente';
+            }
+          } else if (!ata.vencimento || ata.vencimento.trim() === '') {
+            vencimentoText = 'Sem vencimento';
+          }
+
+          return `
                     <tr>
                       <td>${ata.n_ata || ''}</td>
                       <td style="background-color: #eff6ff; font-weight: bold; color: #1e40af; text-align: center;">${ata.processo_adm || 'N/A'}</td>
@@ -286,14 +542,47 @@ const ExportCategoryReport: React.FC<ExportCategoryReportProps> = ({ atas, pedid
                       <td class="objeto-cell">${ata.objeto || ''}</td>
                       <td class="currency">${formatCurrency(ata.valor || 0)}</td>
                       <td class="${(ata.saldo_disponivel || 0) <= 0 ? 'saldo-zerado' : 'currency'}">${saldoStatus}</td>
-                      <td>${formatDate(ata.vencimento)}</td>
+                      <td class="${vencimentoClass}" style="text-align: center;">${vencimentoText}</td>
                       <td style="text-align: center;">${pedidosAta.length}</td>
                       <td class="currency">${formatCurrency(totalPedidos)}</td>
                     </tr>
                   `;
-                }).join('')}
+        }).join('')}
               </tbody>
             </table>
+
+            ${vencimentoStats.vencidas.count > 0 || vencimentoStats.vencendo30.count > 0 ? `
+            <div class="vencimento-stats">
+              <h4>📊 ESTATÍSTICAS DE VENCIMENTO</h4>
+              ${vencimentoStats.vencidas.count > 0 ? `
+              <div class="stat-item vencidas">
+                <span><strong>⚠️ ATAs VENCIDAS:</strong></span>
+                <span>${vencimentoStats.vencidas.count} ATAs (${formatCurrency(vencimentoStats.vencidas.valor)})</span>
+              </div>` : ''}
+              ${vencimentoStats.vencendo30.count > 0 ? `
+              <div class="stat-item vencendo">
+                <span><strong>🔔 Vencendo em 30 dias:</strong></span>
+                <span>${vencimentoStats.vencendo30.count} ATAs (${formatCurrency(vencimentoStats.vencendo30.valor)})</span>
+              </div>` : ''}
+              ${vencimentoStats.vigentes.count > 0 ? `
+              <div class="stat-item vigentes">
+                <span><strong>✅ ATAs Vigentes:</strong></span>
+                <span>${vencimentoStats.vigentes.count} ATAs (${formatCurrency(vencimentoStats.vigentes.valor)})</span>
+              </div>` : ''}
+              ${vencimentoStats.semVencimento.count > 0 ? `
+              <div class="stat-item">
+                <span><strong>📅 Sem data de vencimento:</strong></span>
+                <span>${vencimentoStats.semVencimento.count} ATAs (${formatCurrency(vencimentoStats.semVencimento.valor)})</span>
+              </div>` : ''}
+              ${vencimentoStats.vencidas.count > 0 ? `
+              <div style="margin-top: 15px; padding: 10px; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; color: #dc2626; font-weight: bold; text-align: center;">
+                ⚠️ ATENÇÃO: Existem ${vencimentoStats.vencidas.count} ATA(s) vencida(s) que necessitam de renovação urgente!
+              </div>` : ''}
+              ${vencimentoStats.vencendo30.count > 0 ? `
+              <div style="margin-top: 10px; padding: 10px; background-color: #fef3c7; border: 1px solid #fed7aa; border-radius: 6px; color: #d97706; font-weight: 500; text-align: center;">
+                🔔 AVISO: ${vencimentoStats.vencendo30.count} ATA(s) vencendo em breve. Considere iniciar processo de renovação.
+              </div>` : ''}
+            </div>` : ''}
 
             <div class="summary">
               <h3>RESUMO DO RELATÓRIO DE SALDOS</h3>
@@ -341,7 +630,7 @@ const ExportCategoryReport: React.FC<ExportCategoryReportProps> = ({ atas, pedid
 
       printWindow.document.write(htmlContent);
       printWindow.document.close();
-      
+
       // Auto print after a short delay
       setTimeout(() => {
         console.log('Executando impressão...');
@@ -355,12 +644,23 @@ const ExportCategoryReport: React.FC<ExportCategoryReportProps> = ({ atas, pedid
 
       setIsDialogOpen(false);
       console.log('=== RELATÓRIO GERADO COM SUCESSO ===');
-      
+
     } catch (error) {
       console.error('=== ERRO AO GERAR RELATÓRIO ===', error);
+
+      let errorMessage = "Ocorreu um erro ao gerar o relatório. Tente novamente.";
+
+      if (error instanceof Error) {
+        if (error.message.includes('date') || error.message.includes('Date')) {
+          errorMessage = "Erro ao processar datas de vencimento. Verifique se as datas estão em formato válido.";
+        } else if (error.message.includes('filter')) {
+          errorMessage = "Erro ao aplicar filtros. Verifique os filtros selecionados.";
+        }
+      }
+
       toast({
         title: "Erro",
-        description: "Ocorreu um erro ao gerar o relatório. Tente novamente.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -382,7 +682,7 @@ const ExportCategoryReport: React.FC<ExportCategoryReportProps> = ({ atas, pedid
         <DialogHeader>
           <DialogTitle>Gerar Relatório de Saldos por Categoria</DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-4">
           <div>
             <Label htmlFor="category">Categoria *</Label>
@@ -426,15 +726,34 @@ const ExportCategoryReport: React.FC<ExportCategoryReportProps> = ({ atas, pedid
             </div>
           )}
 
+          <div>
+            <Label htmlFor="vencimento">Filtrar por Vencimento</Label>
+            <Select value={selectedVencimento} onValueChange={(value) => {
+              console.log('Filtro de vencimento selecionado:', value);
+              setSelectedVencimento(value);
+            }}>
+              <SelectTrigger>
+                <SelectValue placeholder="Todos os vencimentos" />
+              </SelectTrigger>
+              <SelectContent>
+                {vencimentoOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="flex justify-end space-x-2 pt-4">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setIsDialogOpen(false)}
               disabled={isGenerating}
             >
               Cancelar
             </Button>
-            <Button 
+            <Button
               onClick={generateCategoryReport}
               disabled={!selectedCategory || isGenerating}
               className="bg-green-600 hover:bg-green-700"

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Plus, MoreHorizontal, Users, Settings } from 'lucide-react';
-import { useTrellinho } from '@/hooks/useTrellinho';
+import { useKazuFlow } from '@/hooks/useKazuFlow';
 import { TrelloList } from './TrelloList';
 import { CreateListDialog } from './CreateListDialog';
 import { TrelloDragDropContext } from './dnd/DragDropContext';
@@ -23,7 +23,7 @@ interface TrelloBoardProps {
 
 export const TrelloBoard: React.FC<TrelloBoardProps> = ({ board, onBack }) => {
   const [showCreateList, setShowCreateList] = useState(false);
-  const { currentBoard, loading, error, fetchBoardDetails, createList, moveCardToList } = useTrellinho();
+  const { currentBoard, loading, error, fetchBoardDetails, createList, moveCardToList } = useKazuFlow();
 
   useEffect(() => {
     fetchBoardDetails(board.id);
@@ -189,7 +189,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({ board, onBack }) => {
             <div className="flex-shrink-0">
               <button
                 onClick={() => setShowCreateList(true)}
-                className="bg-white/20 hover:bg-white/30 text-white p-3 rounded-lg w-64 flex items-center justify-center space-x-2 transition-colors min-h-[100px]"
+                className="bg-white/20 hover:bg-white/30 text-white p-3 rounded-lg w-64 flex items-center justify-center space-x-2 transition-colors h-fit min-h-[60px]"
               >
                 <Plus className="w-5 h-5" />
                 <span>Adicionar uma lista</span>

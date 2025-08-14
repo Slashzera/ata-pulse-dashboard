@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Tag, X, Plus, Edit2, Trash2 } from 'lucide-react';
-import { useTrellinho } from '@/hooks/useTrellinho';
+import { useKazuFlow } from '@/hooks/useKazuFlow';
 
 interface Label {
   id: string;
@@ -52,7 +52,7 @@ export const LabelManager: React.FC<LabelManagerProps> = ({
     deleteLabel, 
     manageCardLabels,
     loading 
-  } = useTrellinho();
+  } = useKazuFlow();
 
   useEffect(() => {
     loadBoardLabels();

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Calendar, MessageSquare, Paperclip, CheckSquare, User, Tag, Edit2, Trash2, MoreHorizontal } from 'lucide-react';
 import { CardDetailModal } from './CardDetailModal';
-import { useTrellinho } from '@/hooks/useTrellinho';
+import { useKazuFlow } from '@/hooks/useKazuFlow';
 
 interface Card {
   id: string;
@@ -26,7 +26,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({ card, boardId, listId, o
   const [showActions, setShowActions] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState(card.title);
-  const { archiveCard, updateCardTitle } = useTrellinho();
+  const { archiveCard, updateCardTitle } = useKazuFlow();
 
   const formatDueDate = (dateString?: string) => {
     if (!dateString) return null;
@@ -132,7 +132,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({ card, boardId, listId, o
   return (
     <>
       <div
-        className={`bg-white rounded-lg p-2 shadow-sm hover:shadow-md cursor-pointer transition-all border border-gray-200 relative group ${
+        className={`bg-white rounded-md p-2 shadow-sm hover:shadow-md cursor-pointer transition-all border border-gray-200 relative group min-h-[60px] ${
           isDragging ? 'shadow-lg scale-105' : ''
         }`}
         onMouseEnter={() => setShowActions(true)}

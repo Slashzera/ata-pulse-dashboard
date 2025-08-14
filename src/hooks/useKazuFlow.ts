@@ -67,7 +67,7 @@ interface Attachment {
   mime_type?: string;
 }
 
-export const useTrellinho = () => {
+export const useKazuFlow = () => {
   const [boards, setBoards] = useState<Board[]>([]);
   const [currentBoard, setCurrentBoard] = useState<any>(null);
   const [loading, setLoading] = useState(false);

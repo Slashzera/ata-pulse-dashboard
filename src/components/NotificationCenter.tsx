@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, X, Check, Calendar, MessageSquare, ArrowRight } from 'lucide-react';
-import { useTrellinho } from '@/hooks/useTrellinho';
+import { useKazuFlow } from '@/hooks/useKazuFlow';
 
 interface Notification {
   id: string;
@@ -23,7 +23,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onClose 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const { getUserNotifications } = useTrellinho();
+  const { getUserNotifications } = useKazuFlow();
 
   useEffect(() => {
     loadNotifications();
