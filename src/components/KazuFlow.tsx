@@ -4,6 +4,7 @@ import { useKazuFlow } from '@/hooks/useKazuFlow';
 import { TrelloBoard } from './TrelloBoard';
 import { CreateBoardDialog } from './CreateBoardDialog';
 import { NotificationCenter } from './NotificationCenter';
+import { Footer } from './Footer';
 
 interface Board {
   id: string;
@@ -27,8 +28,22 @@ export const KazuFlow: React.FC<KazuFlowProps> = ({ onBack }) => {
   const { boards, loading, error, fetchBoards, createBoard, createBoardWithType, updateBoard, archiveBoard } = useKazuFlow();
 
   useEffect(() => {
-    fetchBoards();
+    let isMounted = true;
+    
+    const loadBoards = async () => {
+      if (isMounted) {
+        await fetchBoards();
+      }
+    };
+    
+    loadBoards();
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
+
+  const [isCreatingBoard, setIsCreatingBoard] = useState(false);
 
   const handleCreateBoard = async (boardData: { 
     title: string; 
@@ -41,16 +56,37 @@ export const KazuFlow: React.FC<KazuFlowProps> = ({ onBack }) => {
     object_description?: string;
     process_value?: number;
   }) => {
+    // Prevenir múltiplas criações simultâneas
+    if (isCreatingBoard) {
+      console.log('⚠️ Criação já em andamento, ignorando...');
+      return;
+    }
+
     try {
+      setIsCreatingBoard(true);
+      console.log('🔄 Iniciando criação de quadro:', boardData);
+
+      let result;
       if (boardData.board_type_id) {
-        await createBoardWithType(boardData as any);
+        result = await createBoardWithType(boardData as any);
       } else {
-        await createBoard(boardData);
+        result = await createBoard(boardData);
       }
+
+      console.log('✅ Quadro criado com sucesso:', result);
+      
       setShowCreateBoard(false);
-      fetchBoards();
+      
+      // Aguardar um pouco antes de atualizar a lista
+      setTimeout(() => {
+        fetchBoards();
+      }, 1000);
+      
     } catch (error) {
-      console.error('Erro ao criar quadro:', error);
+      console.error('❌ Erro ao criar quadro:', error);
+      alert('Erro ao criar quadro. Tente novamente.');
+    } finally {
+      setIsCreatingBoard(false);
     }
   };
 
@@ -260,6 +296,9 @@ export const KazuFlow: React.FC<KazuFlowProps> = ({ onBack }) => {
             onClose={() => setShowNotifications(false)}
           />
         )}
+
+        {/* Footer com informações de patente */}
+        <Footer />
       </div>
     </div>
   );
@@ -277,7 +316,18 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, onClick, onUpdate }) => {
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [editTitle, setEditTitle] = useState(board.title);
   const menuRef = useRef<HTMLDivElement>(null);
-  const { updateBoard, archiveBoard } = useKazuFlow();
+  const { updateBoard, archiveBoard, createBoard } = useKazuFlow();
+
+  // Debug: Verificar se as funções estão disponíveis
+  useEffect(() => {
+    console.log('🔍 Debug BoardCard - Funções disponíveis:', {
+      updateBoard: typeof updateBoard,
+      archiveBoard: typeof archiveBoard,
+      createBoard: typeof createBoard,
+      boardId: board.id,
+      boardTitle: board.title
+    });
+  }, [updateBoard, archiveBoard, createBoard, board.id, board.title]);
 
   // Cores disponíveis para os quadros
   const availableColors = [
@@ -324,19 +374,38 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, onClick, onUpdate }) => {
   const handleSaveTitle = async () => {
     const newTitle = editTitle.trim();
 
-    if (!newTitle || newTitle === board.title) {
+    if (!newTitle) {
+      alert('O título não pode estar vazio!');
+      return;
+    }
+
+    if (newTitle === board.title) {
       setIsEditingTitle(false);
-      setEditTitle(board.title);
       return;
     }
 
     try {
-      await updateBoard(board.id, { title: newTitle });
+      console.log('🔄 Iniciando atualização do título:', { boardId: board.id, oldTitle: board.title, newTitle });
+      
+      if (!updateBoard) {
+        throw new Error('Função updateBoard não está disponível');
+      }
+
+      const result = await updateBoard(board.id, { title: newTitle });
+      console.log('✅ Título atualizado com sucesso:', result);
+      
       setIsEditingTitle(false);
-      onUpdate();
-    } catch (error) {
-      console.error('Erro ao salvar título do quadro:', error);
-      alert('Erro ao salvar título. Tente novamente.');
+      
+      // Aguardar um pouco antes de atualizar para garantir que o banco foi atualizado
+      setTimeout(() => {
+        onUpdate();
+      }, 500);
+      
+      alert('✅ Título atualizado com sucesso!');
+    } catch (error: any) {
+      console.error('❌ Erro detalhado ao salvar título:', error);
+      const errorMessage = error?.message || error?.toString() || 'Erro desconhecido';
+      alert(`❌ Erro ao salvar título: ${errorMessage}`);
       setEditTitle(board.title);
       setIsEditingTitle(false);
     }
@@ -349,25 +418,75 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, onClick, onUpdate }) => {
 
   const handleArchiveBoard = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm('Tem certeza que deseja excluir este quadro? Esta ação não pode ser desfeita.')) {
+    setShowMenu(false);
+    
+    const confirmDelete = confirm(`⚠️ Tem certeza que deseja excluir o quadro "${board.title}"?\n\nEsta ação não pode ser desfeita e irá remover:\n- Todas as listas\n- Todos os cartões\n- Todos os dados do quadro`);
+    
+    if (confirmDelete) {
       try {
-        console.log('Iniciando exclusão do quadro:', board.id);
+        console.log('🔄 Iniciando exclusão do quadro:', { boardId: board.id, title: board.title });
+        
+        if (!archiveBoard) {
+          throw new Error('Função archiveBoard não está disponível');
+        }
+
         await archiveBoard(board.id);
-        console.log('Quadro excluído com sucesso');
-        setShowMenu(false);
-        onUpdate();
+        console.log('✅ Quadro excluído com sucesso');
+        
+        // Aguardar um pouco antes de atualizar
+        setTimeout(() => {
+          onUpdate();
+        }, 500);
+        
+        alert('✅ Quadro excluído com sucesso!');
       } catch (error: any) {
-        console.error('Erro detalhado ao excluir quadro:', error);
-        const errorMessage = error?.message || 'Erro desconhecido';
-        alert(`Erro ao excluir quadro: ${errorMessage}`);
+        console.error('❌ Erro detalhado ao excluir quadro:', error);
+        const errorMessage = error?.message || error?.toString() || 'Erro desconhecido';
+        alert(`❌ Erro ao excluir quadro: ${errorMessage}`);
       }
     }
   };
 
-  const handleCopyBoard = (e: React.MouseEvent) => {
+  const handleCopyBoard = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    alert('Funcionalidade de copiar quadro será implementada em breve.');
     setShowMenu(false);
+    
+    try {
+      const newTitle = `${board.title} (Cópia)`;
+      const newDescription = board.description ? `${board.description} (Cópia)` : undefined;
+      
+      console.log('🔄 Iniciando cópia do quadro:', { 
+        originalId: board.id, 
+        originalTitle: board.title,
+        newTitle, 
+        newDescription, 
+        backgroundColor: board.background_color 
+      });
+      
+      if (!createBoard) {
+        throw new Error('Função createBoard não está disponível');
+      }
+
+      // Criar um novo quadro
+      const result = await createBoard({
+        title: newTitle,
+        description: newDescription,
+        background_color: board.background_color
+      });
+      
+      console.log('✅ Quadro copiado com sucesso:', result);
+      
+      // Aguardar um pouco antes de atualizar
+      setTimeout(() => {
+        onUpdate();
+      }, 1000);
+      
+      alert('✅ Quadro copiado com sucesso!');
+    } catch (error: any) {
+      console.error('❌ Erro detalhado ao copiar quadro:', error);
+      const errorMessage = error?.message || error?.toString() || 'Erro desconhecido';
+      alert(`❌ Erro ao copiar quadro: ${errorMessage}`);
+    }
   };
 
   const handleChangeColor = (e: React.MouseEvent) => {
@@ -378,12 +497,28 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, onClick, onUpdate }) => {
 
   const handleColorSelect = async (color: string) => {
     try {
-      await updateBoard(board.id, { background_color: color });
+      console.log('🔄 Iniciando alteração de cor:', { boardId: board.id, oldColor: board.background_color, newColor: color });
+      
+      if (!updateBoard) {
+        throw new Error('Função updateBoard não está disponível');
+      }
+
+      const result = await updateBoard(board.id, { background_color: color });
+      console.log('✅ Cor alterada com sucesso:', result);
+      
       setShowColorPicker(false);
-      onUpdate();
-    } catch (error) {
-      console.error('Erro ao alterar cor do quadro:', error);
-      alert('Erro ao alterar cor. Tente novamente.');
+      
+      // Aguardar um pouco antes de atualizar
+      setTimeout(() => {
+        onUpdate();
+      }, 500);
+      
+      alert('✅ Cor alterada com sucesso!');
+    } catch (error: any) {
+      console.error('❌ Erro detalhado ao alterar cor:', error);
+      const errorMessage = error?.message || error?.toString() || 'Erro desconhecido';
+      alert(`❌ Erro ao alterar cor: ${errorMessage}`);
+      setShowColorPicker(false);
     }
   };
 
@@ -438,9 +573,6 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, onClick, onUpdate }) => {
         >
           {/* Background Pattern */}
           <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-4 right-4">
-              <Workflow className="h-16 w-16" />
-            </div>
             <div className="absolute bottom-4 left-4">
               <Grid3X3 className="h-12 w-12" />
             </div>

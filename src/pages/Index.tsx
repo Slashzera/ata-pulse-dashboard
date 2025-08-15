@@ -5,6 +5,8 @@ import { usePedidos } from '@/hooks/usePedidos';
 import Header from '@/components/Header';
 import Dashboard from '@/components/Dashboard';
 import ExpirationAlerts from '@/components/ExpirationAlerts';
+import { Footer } from '@/components/Footer';
+import { KazuChatButton } from '@/components/KazuChatButton';
 import CreateAdesaoDialog from '@/components/CreateAdesaoDialog';
 import CreateAquisicaoGlobalDialog from '@/components/CreateAquisicaoGlobalDialog';
 import CreateContratoAntigoDialog from '@/components/CreateContratoAntigoDialog';
@@ -167,27 +169,9 @@ const Index = () => {
           </div>
         )}
         
-        {/* Barra de pesquisa de processos administrativos */}
+        {/* Fale com Kazu - IA Virtual */}
         <div className="mb-6">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Pesquisar por nome da pasta, número do processo ou criador..."
-              value={processoSearch}
-              onChange={(e) => setProcessoSearch(e.target.value)}
-              className="pl-10 pr-10 bg-white w-full border border-gray-200 shadow-sm"
-            />
-            {processoSearch && (
-              <button
-                type="button"
-                onClick={() => setProcessoSearch('')}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
-                aria-label="Limpar busca"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
+          <KazuChatButton />
         </div>
         
         <Dashboard 
@@ -223,6 +207,9 @@ const Index = () => {
         isOpen={isContratoAntigoDialogOpen}
         onClose={() => setIsContratoAntigoDialogOpen(false)}
       />
+
+      {/* Footer com informações de patente */}
+      <Footer />
     </div>
   );
 };

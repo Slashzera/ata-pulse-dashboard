@@ -932,21 +932,41 @@ export const useKazuFlow = () => {
       setLoading(true);
       setError(null);
 
-      const { data, error } = await supabase.rpc('create_board_with_type', {
-        board_title: boardData.title,
-        board_description: boardData.description,
-        background_color: boardData.background_color || '#0079bf',
-        board_type_uuid: boardData.board_type_id,
-        process_number: boardData.process_number,
-        responsible_person: boardData.responsible_person,
-        company: boardData.company,
-        object_description: boardData.object_description,
-        process_value: boardData.process_value
-      });
+      // Tentar usar a nova função com listas ordenadas primeiro
+      try {
+        const { data, error } = await supabase.rpc('create_board_with_ordered_lists', {
+          board_title: boardData.title,
+          board_description: boardData.description,
+          background_color: boardData.background_color || '#0079bf',
+          board_type_uuid: boardData.board_type_id,
+          process_number: boardData.process_number,
+          responsible_person: boardData.responsible_person,
+          company: boardData.company,
+          object_description: boardData.object_description,
+          process_value: boardData.process_value
+        });
 
-      if (error) throw error;
+        if (error) throw error;
+        return data;
+      } catch (rpcError) {
+        console.warn('Função com listas ordenadas falhou, usando função padrão:', rpcError);
+        
+        // Fallback para a função original
+        const { data, error } = await supabase.rpc('create_board_with_type', {
+          board_title: boardData.title,
+          board_description: boardData.description,
+          background_color: boardData.background_color || '#0079bf',
+          board_type_uuid: boardData.board_type_id,
+          process_number: boardData.process_number,
+          responsible_person: boardData.responsible_person,
+          company: boardData.company,
+          object_description: boardData.object_description,
+          process_value: boardData.process_value
+        });
 
-      return data;
+        if (error) throw error;
+        return data;
+      }
     } catch (err: any) {
       setError(err.message);
       throw err;

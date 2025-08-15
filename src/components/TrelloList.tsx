@@ -135,85 +135,120 @@ export const TrelloList: React.FC<TrelloListProps> = ({ list, boardId }) => {
   };
 
   return (
-    <div className="bg-gray-100 rounded-lg p-3 w-64 flex-shrink-0 h-fit max-h-[calc(100vh-200px)] flex flex-col">
-      {/* List Header */}
-      <div className="flex items-center justify-between mb-2">
-        {isEditingTitle ? (
-          <div className="flex-1 mr-2">
-            <input
-              type="text"
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleSaveListTitle();
-                }
-                if (e.key === 'Escape') {
-                  e.preventDefault();
-                  handleCancelEditTitle();
-                }
-              }}
-              onBlur={handleSaveListTitle}
-              className="w-full font-semibold text-gray-800 bg-white border border-blue-500 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              autoFocus
-            />
-          </div>
-        ) : (
-          <h3 className="font-semibold text-gray-800 px-2 flex-1 truncate" title={list.title}>{list.title}</h3>
-        )}
+    <div className="group bg-gradient-to-br from-slate-800/95 via-slate-900/95 to-gray-900/95 backdrop-blur-xl border-2 border-cyan-400/30 rounded-3xl p-8 w-96 flex-shrink-0 h-fit max-h-[calc(100vh-250px)] flex flex-col shadow-2xl shadow-cyan-500/20 hover:shadow-cyan-400/30 hover:border-cyan-300/50 transition-all duration-500 hover:scale-105">
+      {/* List Header NEON */}
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4 flex-1">
+          <div className="w-4 h-4 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full shadow-lg shadow-cyan-400/50 animate-pulse"></div>
+          {isEditingTitle ? (
+            <div className="flex-1">
+              <input
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSaveListTitle();
+                  }
+                  if (e.key === 'Escape') {
+                    e.preventDefault();
+                    handleCancelEditTitle();
+                  }
+                }}
+                onBlur={handleSaveListTitle}
+                className="w-full font-bold text-white text-xl bg-slate-800/50 border-2 border-cyan-400 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-300"
+                autoFocus
+              />
+            </div>
+          ) : (
+            <h3 className="font-bold text-white text-lg flex-1 leading-tight break-words hyphens-auto drop-shadow-lg pr-2" 
+                title={list.title}
+                style={{ 
+                  wordBreak: 'break-word',
+                  overflowWrap: 'break-word',
+                  lineHeight: '1.3',
+                  maxHeight: '3.9em',
+                  overflow: 'hidden',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 3,
+                  WebkitBoxOrient: 'vertical'
+                }}>
+              {list.title}
+            </h3>
+          )}
+          <span className="bg-gradient-to-r from-cyan-500/20 to-purple-500/20 text-cyan-300 px-4 py-2 rounded-full text-sm font-bold border border-cyan-400/30 shadow-lg">
+            {list.cards?.length || 0}
+          </span>
+        </div>
         
         <div className="relative" ref={menuRef}>
           <button 
             onClick={() => setShowListMenu(!showListMenu)}
-            className="text-gray-500 hover:text-gray-700 p-1 rounded hover:bg-gray-200 transition-colors"
+            className="opacity-0 group-hover:opacity-100 transition-all duration-300 p-3 hover:bg-cyan-500/20 rounded-2xl text-cyan-300 hover:text-cyan-100 border border-transparent hover:border-cyan-400/50"
           >
-            <MoreHorizontal className="w-4 h-4" />
+            <MoreHorizontal className="w-6 h-6" />
           </button>
 
-          {/* Dropdown Menu */}
+          {/* Dropdown Menu Moderno */}
           {showListMenu && (
-            <div className="absolute right-0 top-8 bg-white rounded-lg shadow-lg border border-gray-200 py-2 w-48 z-50">
+            <div className="absolute right-0 top-10 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 py-3 w-56 z-50 animate-in slide-in-from-top-2 duration-300">
+              <div className="px-4 py-2 border-b border-gray-100 mb-2">
+                <p className="text-sm font-semibold text-gray-700">Opções da Lista</p>
+              </div>
+              
               <button
                 onClick={handleEditListTitle}
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+                className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 flex items-center gap-3 transition-all duration-300 hover:scale-[1.02]"
               >
-                <Edit2 className="w-4 h-4" />
-                <span>Editar título</span>
+                <div className="p-1 bg-blue-100 rounded-lg">
+                  <Edit2 className="w-4 h-4 text-blue-600" />
+                </div>
+                <span className="font-medium">Editar título</span>
               </button>
               
               <button
                 onClick={handleToggleComments}
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+                className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-purple-50 flex items-center gap-3 transition-all duration-300 hover:scale-[1.02]"
               >
-                <MessageSquare className="w-4 h-4" />
-                <span>{showComments ? 'Ocultar comentários' : 'Mostrar comentários'}</span>
+                <div className="p-1 bg-purple-100 rounded-lg">
+                  <MessageSquare className="w-4 h-4 text-purple-600" />
+                </div>
+                <span className="font-medium">{showComments ? 'Ocultar comentários' : 'Mostrar comentários'}</span>
               </button>
               
               <button
                 onClick={handleCopyList}
-                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+                className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-green-50 flex items-center gap-3 transition-all duration-300 hover:scale-[1.02]"
               >
-                <Copy className="w-4 h-4" />
-                <span>Copiar lista</span>
+                <div className="p-1 bg-green-100 rounded-lg">
+                  <Copy className="w-4 h-4 text-green-600" />
+                </div>
+                <span className="font-medium">Copiar lista</span>
               </button>
               
-              <hr className="my-2" />
+              <div className="border-t border-gray-100 my-2"></div>
               
               <button
                 onClick={handleArchiveList}
-                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
+                className="w-full text-left px-4 py-3 text-sm text-red-700 hover:bg-red-50 flex items-center gap-3 transition-all duration-300 hover:scale-[1.02]"
               >
-                <Archive className="w-4 h-4" />
-                <span>Arquivar lista</span>
+                <div className="p-1 bg-red-100 rounded-lg">
+                  <Archive className="w-4 h-4 text-red-600" />
+                </div>
+                <span className="font-medium">Arquivar lista</span>
               </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* Cards with Drag and Drop - Scroll Vertical */}
-      <div className="flex-1 overflow-y-auto mb-3 min-h-[50px] max-h-[400px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+      {/* Cards Area Moderna */}
+      <div className="flex-1 overflow-y-auto mb-6 min-h-[120px] max-h-[500px]" 
+           style={{
+             scrollbarWidth: 'thin',
+             scrollbarColor: 'rgba(148, 163, 184, 0.3) transparent'
+           }}>
         <DroppableList
           list={list}
           boardId={boardId}
@@ -267,15 +302,15 @@ export const TrelloList: React.FC<TrelloListProps> = ({ list, boardId }) => {
         </div>
       )}
 
-      {/* Quick Add Card */}
+      {/* Botão Adicionar Cartão NEON EXTREMO */}
       {showQuickAdd ? (
-        <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-200 mb-1">
+        <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 rounded-3xl p-6 shadow-2xl border-2 border-cyan-400/50 backdrop-blur-xl">
           <textarea
             value={quickTitle}
             onChange={(e) => setQuickTitle(e.target.value)}
             placeholder="Insira um título para este cartão..."
-            className="w-full text-sm resize-none border-none focus:outline-none focus:ring-0 p-1"
-            rows={2}
+            className="w-full text-white text-lg resize-none border-2 border-cyan-400/50 rounded-2xl p-4 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-300 bg-slate-800/50 placeholder-cyan-300/70"
+            rows={4}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -288,26 +323,28 @@ export const TrelloList: React.FC<TrelloListProps> = ({ list, boardId }) => {
             }}
             autoFocus
           />
-          <div className="flex items-center space-x-2 mt-2">
-            <button
-              onClick={handleQuickAdd}
-              disabled={!quickTitle.trim()}
-              className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Adicionar cartão
-            </button>
-            <button
-              onClick={handleCancelQuickAdd}
-              className="p-1 text-gray-600 hover:text-gray-800"
-            >
-              <X className="w-4 h-4" />
-            </button>
+          <div className="flex items-center justify-between mt-4">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleQuickAdd}
+                disabled={!quickTitle.trim()}
+                className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white text-lg rounded-2xl font-bold shadow-2xl shadow-cyan-500/30 hover:shadow-cyan-400/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110"
+              >
+                Adicionar cartão
+              </button>
+              <button
+                onClick={handleCancelQuickAdd}
+                className="p-3 text-cyan-300 hover:text-cyan-100 hover:bg-slate-700/50 rounded-2xl transition-all duration-300 border border-cyan-400/30 hover:border-cyan-300/50"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
             <button
               onClick={() => {
                 setShowQuickAdd(false);
                 setShowCreateCard(true);
               }}
-              className="text-xs text-gray-600 hover:text-gray-800 underline"
+              className="text-sm text-cyan-400 hover:text-cyan-200 font-bold hover:underline transition-colors duration-300"
             >
               Mais opções
             </button>
@@ -316,10 +353,19 @@ export const TrelloList: React.FC<TrelloListProps> = ({ list, boardId }) => {
       ) : (
         <button
           onClick={() => setShowQuickAdd(true)}
-          className="w-full text-left text-gray-600 hover:text-gray-800 hover:bg-gray-200 p-2 rounded-md transition-colors flex items-center space-x-2 text-sm"
+          className="group/btn w-full flex items-center justify-between p-6 bg-gradient-to-r from-slate-800/80 via-slate-900/80 to-gray-900/80 hover:from-cyan-900/50 hover:to-purple-900/50 border-2 border-dashed border-cyan-400/40 hover:border-cyan-300 rounded-3xl transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-cyan-500/25"
         >
-          <Plus className="w-4 h-4" />
-          <span>Adicionar um cartão</span>
+          <div className="flex items-center gap-4">
+            <div className="p-4 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-2xl group-hover/btn:from-cyan-400/30 group-hover/btn:to-purple-400/30 transition-all duration-300 border border-cyan-400/30">
+              <Plus className="h-6 w-6 text-cyan-300" />
+            </div>
+            <span className="text-cyan-200 group-hover/btn:text-cyan-100 font-bold text-lg transition-colors duration-300">
+              Adicionar um cartão
+            </span>
+          </div>
+          <div className="opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300">
+            <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse shadow-lg shadow-cyan-400/50"></div>
+          </div>
         </button>
       )}
 

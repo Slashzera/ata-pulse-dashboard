@@ -48,6 +48,7 @@ export const CreateBoardDialog: React.FC<CreateBoardDialogProps> = ({ onClose, o
   const [responsiblePerson, setResponsiblePerson] = useState('');
   const [company, setCompany] = useState('');
   const [objectDescription, setObjectDescription] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [processValue, setProcessValue] = useState<string>('');
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
 
@@ -66,10 +67,25 @@ export const CreateBoardDialog: React.FC<CreateBoardDialogProps> = ({ onClose, o
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (title.trim() && selectedBoardType) {
-      onSubmit({
+    
+    // Prevenir múltiplas submissões
+    if (isSubmitting) {
+      console.log('⚠️ Submissão já em andamento, ignorando...');
+      return;
+    }
+
+    if (!title.trim() || !selectedBoardType) {
+      alert('Por favor, preencha o título e selecione um tipo de processo.');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      console.log('🔄 Iniciando submissão do formulário...');
+      
+      await onSubmit({
         title: title.trim(),
         description: description.trim() || undefined,
         background_color: selectedColor,
@@ -80,6 +96,12 @@ export const CreateBoardDialog: React.FC<CreateBoardDialogProps> = ({ onClose, o
         object_description: objectDescription.trim() || undefined,
         process_value: processValue ? parseFloat(processValue) : undefined
       });
+      
+      console.log('✅ Formulário submetido com sucesso');
+    } catch (error) {
+      console.error('❌ Erro na submissão:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -285,10 +307,10 @@ export const CreateBoardDialog: React.FC<CreateBoardDialogProps> = ({ onClose, o
             </button>
             <button
               type="submit"
-              disabled={!title.trim() || !selectedBoardType || !processNumber.trim() || !responsiblePerson.trim() || loading}
+              disabled={!title.trim() || !selectedBoardType || !processNumber.trim() || !responsiblePerson.trim() || loading || isSubmitting}
               className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? 'Criando...' : 'Criar Processo'}
+              {loading || isSubmitting ? 'Criando...' : 'Criar Processo'}
             </button>
           </div>
         </form>
