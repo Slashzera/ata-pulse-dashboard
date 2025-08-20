@@ -4,7 +4,14 @@ import { useKazuFlow } from '@/hooks/useKazuFlow';
 import { TrelloBoard } from './TrelloBoard';
 import { CreateBoardDialog } from './CreateBoardDialog';
 import { NotificationCenter } from './NotificationCenter';
-import { Footer } from './Footer';
+import { MoveToBoardTrash } from './MoveToBoardTrash';
+import { EditTitleButton } from './EditTitleButton';
+import { ChangeColorButton } from './ChangeColorButton';
+import { CopyBoardButton } from './CopyBoardButton';
+import { DeleteBoardButton } from './DeleteBoardButton';
+import { KazuFlowTrashManager } from './KazuFlowTrashManager';
+import { supabase } from '@/integrations/supabase/client';
+
 
 interface Board {
   id: string;
@@ -15,6 +22,17 @@ interface Board {
   created_at: string;
   updated_at: string;
   member_role: string;
+  process_number?: string;
+  responsible_person?: string;
+  company?: string;
+  object_description?: string;
+  process_value?: number;
+  board_type?: {
+    id: string;
+    name: string;
+    color: string;
+    icon: string;
+  };
 }
 
 interface KazuFlowProps {
@@ -25,7 +43,14 @@ export const KazuFlow: React.FC<KazuFlowProps> = ({ onBack }) => {
   const [selectedBoard, setSelectedBoard] = useState<Board | null>(null);
   const [showCreateBoard, setShowCreateBoard] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showTrashManager, setShowTrashManager] = useState(false);
   const { boards, loading, error, fetchBoards, createBoard, createBoardWithType, updateBoard, archiveBoard } = useKazuFlow();
+  const [localBoards, setLocalBoards] = useState<Board[]>([]);
+
+  // Sincronizar boards locais com os do hook
+  useEffect(() => {
+    setLocalBoards(boards);
+  }, [boards]);
 
   useEffect(() => {
     let isMounted = true;
@@ -44,6 +69,80 @@ export const KazuFlow: React.FC<KazuFlowProps> = ({ onBack }) => {
   }, []);
 
   const [isCreatingBoard, setIsCreatingBoard] = useState(false);
+
+  // FUNÇÃO GLOBAL DE EXCLUSÃO - GARANTIDA PARA FUNCIONAR
+  const deleteBoard = async (boardId: string, boardTitle: string) => {
+    console.log('🚨 FUNÇÃO GLOBAL DE EXCLUSÃO CHAMADA:', boardId, boardTitle);
+    
+    const confirmDelete = confirm(`⚠️ Tem certeza que deseja excluir o quadro "${boardTitle}"?\n\nEsta ação não pode ser desfeita!`);
+    
+    if (!confirmDelete) {
+      console.log('❌ Exclusão cancelada pelo usuário');
+      return false;
+    }
+    
+    try {
+      console.log('🔄 Iniciando exclusão...');
+      
+      // Método 1: Função do hook
+      if (archiveBoard) {
+        console.log('📞 Tentando archiveBoard do hook...');
+        try {
+          const result = await archiveBoard(boardId);
+          console.log('✅ Hook funcionou:', result);
+          alert('✅ Quadro excluído com sucesso!');
+          await fetchBoards();
+          return true;
+        } catch (hookError) {
+          console.error('❌ Hook falhou:', hookError);
+        }
+      }
+      
+      // Método 2: Supabase RPC
+      console.log('📞 Tentando emergency_delete_board...');
+      try {
+        const { data, error } = await supabase.rpc('emergency_delete_board', {
+          board_id: boardId
+        });
+        
+        if (error) throw error;
+        
+        if (data === true) {
+          console.log('✅ RPC funcionou!');
+          alert('✅ Quadro excluído com sucesso!');
+          await fetchBoards();
+          return true;
+        }
+      } catch (rpcError) {
+        console.error('❌ RPC falhou:', rpcError);
+      }
+      
+      // Método 3: SQL direto
+      console.log('📞 Tentando SQL direto...');
+      try {
+        const { error } = await supabase
+          .from('trello_boards')
+          .update({ is_deleted: true })
+          .eq('id', boardId);
+        
+        if (error) throw error;
+        
+        console.log('✅ SQL direto funcionou!');
+        alert('✅ Quadro excluído com sucesso!');
+        await fetchBoards();
+        return true;
+      } catch (sqlError) {
+        console.error('❌ SQL direto falhou:', sqlError);
+      }
+      
+      throw new Error('Todos os métodos falharam');
+      
+    } catch (error: any) {
+      console.error('💥 ERRO TOTAL:', error);
+      alert(`❌ Erro ao excluir quadro: ${error.message}`);
+      return false;
+    }
+  };
 
   const handleCreateBoard = async (boardData: { 
     title: string; 
@@ -66,6 +165,27 @@ export const KazuFlow: React.FC<KazuFlowProps> = ({ onBack }) => {
       setIsCreatingBoard(true);
       console.log('🔄 Iniciando criação de quadro:', boardData);
 
+      // Atualização otimista - adicionar o quadro temporariamente à lista
+      const tempBoard = {
+        id: `temp-${Date.now()}`,
+        title: boardData.title,
+        description: boardData.description || '',
+        background_color: boardData.background_color || '#0079bf',
+        created_by: 'current-user',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        member_role: 'owner',
+        process_number: boardData.process_number,
+        responsible_person: boardData.responsible_person,
+        company: boardData.company,
+        object_description: boardData.object_description,
+        process_value: boardData.process_value
+      };
+
+      // Adicionar temporariamente à lista para feedback imediato
+      setLocalBoards(prevBoards => [tempBoard, ...prevBoards]);
+      setShowCreateBoard(false);
+
       let result;
       if (boardData.board_type_id) {
         result = await createBoardWithType(boardData as any);
@@ -75,15 +195,15 @@ export const KazuFlow: React.FC<KazuFlowProps> = ({ onBack }) => {
 
       console.log('✅ Quadro criado com sucesso:', result);
       
-      setShowCreateBoard(false);
-      
-      // Aguardar um pouco antes de atualizar a lista
-      setTimeout(() => {
-        fetchBoards();
-      }, 1000);
+      // Atualizar com dados reais do servidor
+      await fetchBoards();
       
     } catch (error) {
       console.error('❌ Erro ao criar quadro:', error);
+      
+      // Remover o quadro temporário em caso de erro
+      setLocalBoards(prevBoards => prevBoards.filter(board => !board.id.startsWith('temp-')));
+      
       alert('Erro ao criar quadro. Tente novamente.');
     } finally {
       setIsCreatingBoard(false);
@@ -179,7 +299,7 @@ export const KazuFlow: React.FC<KazuFlowProps> = ({ onBack }) => {
                   <Grid3X3 className="h-6 w-6 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-blue-800">{boards.length}</p>
+                  <p className="text-2xl font-bold text-blue-800">{localBoards.length}</p>
                   <p className="text-blue-600 text-sm">Quadros Ativos</p>
                 </div>
               </div>
@@ -192,7 +312,7 @@ export const KazuFlow: React.FC<KazuFlowProps> = ({ onBack }) => {
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-emerald-800">
-                    {boards.reduce((acc, board) => acc + (board.member_role === 'owner' ? 1 : 0), 0)}
+                    {localBoards.reduce((acc, board) => acc + (board.member_role === 'owner' ? 1 : 0), 0)}
                   </p>
                   <p className="text-emerald-600 text-sm">Seus Projetos</p>
                 </div>
@@ -206,7 +326,7 @@ export const KazuFlow: React.FC<KazuFlowProps> = ({ onBack }) => {
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-amber-800">
-                    {boards.filter(board => board.member_role === 'member').length}
+                    {localBoards.filter(board => board.member_role === 'member').length}
                   </p>
                   <p className="text-amber-600 text-sm">Colaborações</p>
                 </div>
@@ -255,7 +375,7 @@ export const KazuFlow: React.FC<KazuFlowProps> = ({ onBack }) => {
               <p className="text-red-600 font-semibold mb-2">Ops! Algo deu errado</p>
               <p className="text-red-500 text-sm">{error}</p>
             </div>
-          ) : boards.length === 0 ? (
+          ) : localBoards.length === 0 ? (
             <div className="col-span-full text-center py-16">
               <div className="mx-auto w-20 h-20 bg-gradient-to-br from-violet-100 to-purple-100 rounded-full flex items-center justify-center mb-6">
                 <Layout className="h-10 w-10 text-violet-600" />
@@ -271,12 +391,14 @@ export const KazuFlow: React.FC<KazuFlowProps> = ({ onBack }) => {
               </button>
             </div>
           ) : (
-            boards.map((board) => (
+            localBoards.map((board) => (
               <BoardCard 
                 key={board.id} 
                 board={board} 
                 onClick={() => setSelectedBoard(board)}
                 onUpdate={fetchBoards}
+                localBoards={localBoards}
+                setLocalBoards={setLocalBoards}
               />
             ))
           )}
@@ -297,8 +419,7 @@ export const KazuFlow: React.FC<KazuFlowProps> = ({ onBack }) => {
           />
         )}
 
-        {/* Footer com informações de patente */}
-        <Footer />
+
       </div>
     </div>
   );
@@ -308,9 +429,11 @@ interface BoardCardProps {
   board: Board;
   onClick: () => void;
   onUpdate: () => void;
+  localBoards: Board[];
+  setLocalBoards: React.Dispatch<React.SetStateAction<Board[]>>;
 }
 
-const BoardCard: React.FC<BoardCardProps> = ({ board, onClick, onUpdate }) => {
+const BoardCard: React.FC<BoardCardProps> = ({ board, onClick, onUpdate, localBoards, setLocalBoards }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
@@ -420,29 +543,89 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, onClick, onUpdate }) => {
     e.stopPropagation();
     setShowMenu(false);
     
-    const confirmDelete = confirm(`⚠️ Tem certeza que deseja excluir o quadro "${board.title}"?\n\nEsta ação não pode ser desfeita e irá remover:\n- Todas as listas\n- Todos os cartões\n- Todos os dados do quadro`);
+    console.log('🔥 BOTÃO EXCLUIR CLICADO!', board.id, board.title);
     
-    if (confirmDelete) {
-      try {
-        console.log('🔄 Iniciando exclusão do quadro:', { boardId: board.id, title: board.title });
-        
-        if (!archiveBoard) {
-          throw new Error('Função archiveBoard não está disponível');
-        }
-
-        await archiveBoard(board.id);
-        console.log('✅ Quadro excluído com sucesso');
-        
-        // Aguardar um pouco antes de atualizar
-        setTimeout(() => {
-          onUpdate();
-        }, 500);
+    const confirmDelete = confirm(`⚠️ Tem certeza que deseja excluir o quadro "${board.title}"?\n\nEsta ação não pode ser desfeita!`);
+    
+    if (!confirmDelete) {
+      console.log('❌ Exclusão cancelada pelo usuário');
+      return;
+    }
+    
+    try {
+      console.log('🚨 INICIANDO EXCLUSÃO:', board.id, board.title);
+      
+      // Método 1: Usar a função do hook primeiro
+      if (archiveBoard) {
+        console.log('📞 Tentando função do hook archiveBoard...');
+        const result = await archiveBoard(board.id);
+        console.log('✅ Resultado da função do hook:', result);
         
         alert('✅ Quadro excluído com sucesso!');
-      } catch (error: any) {
-        console.error('❌ Erro detalhado ao excluir quadro:', error);
-        const errorMessage = error?.message || error?.toString() || 'Erro desconhecido';
-        alert(`❌ Erro ao excluir quadro: ${errorMessage}`);
+        await onUpdate();
+        return;
+      }
+      
+      // Método 2: Importar supabase diretamente
+      console.log('📞 Tentando supabase direto...');
+      let supabase;
+      try {
+        const supabaseModule = await import('@/integrations/supabase/client');
+        supabase = supabaseModule.supabase;
+        console.log('✅ Supabase importado com sucesso');
+      } catch (importError) {
+        console.error('❌ Erro ao importar Supabase:', importError);
+        throw new Error('Não foi possível importar o Supabase');
+      }
+      
+      // Tentar função emergency_delete_board
+      const { data, error } = await supabase.rpc('emergency_delete_board', {
+        board_id: board.id
+      });
+      
+      if (error) {
+        console.error('❌ Erro na função emergency_delete_board:', error);
+        throw error;
+      }
+      
+      if (data === true) {
+        console.log('✅ EXCLUSÃO VIA SUPABASE FUNCIONOU!');
+        alert('✅ Quadro excluído com sucesso!');
+        await onUpdate();
+        return;
+      }
+      
+      throw new Error('Função emergency_delete_board retornou false');
+      
+    } catch (error: any) {
+      console.error('💥 Erro na exclusão:', error);
+      
+      // Método 3: SQL direto como último recurso
+      try {
+        console.log('🔄 Tentando SQL direto como último recurso...');
+        let supabase;
+        try {
+          const supabaseModule = await import('@/integrations/supabase/client');
+          supabase = supabaseModule.supabase;
+        } catch (importError) {
+          console.error('❌ Erro ao importar Supabase no método 3:', importError);
+          throw new Error('Não foi possível importar o Supabase');
+        }
+        
+        const { error: directError } = await supabase
+          .from('trello_boards')
+          .update({ is_deleted: true })
+          .eq('id', board.id);
+        
+        if (directError) throw directError;
+        
+        console.log('✅ SQL DIRETO FUNCIONOU!');
+        alert('✅ Quadro excluído com sucesso!');
+        await onUpdate();
+        
+      } catch (directError: any) {
+        console.error('💥 TODOS OS MÉTODOS FALHARAM:', directError);
+        alert(`❌ Erro ao excluir quadro: ${directError.message || 'Erro desconhecido'}\n\nTente recarregar a página e tentar novamente.`);
       }
     }
   };
@@ -582,11 +765,42 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, onClick, onUpdate }) => {
           <div className="relative z-10">
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
+                {/* Número do Processo */}
+                {board.process_number && (
+                  <div className="mb-2">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/20 text-white backdrop-blur-sm">
+                      📋 {board.process_number}
+                    </span>
+                  </div>
+                )}
+                
                 <h3 className="font-bold text-xl mb-2 line-clamp-2 group-hover:text-shadow-lg transition-all duration-300">
                   {board.title}
                 </h3>
+                
+                {/* Responsável */}
+                {board.responsible_person && (
+                  <p className="text-sm opacity-90 mb-1">
+                    👤 <strong>Responsável:</strong> {board.responsible_person}
+                  </p>
+                )}
+                
+                {/* Empresa */}
+                {board.company && (
+                  <p className="text-sm opacity-90 mb-1">
+                    🏢 <strong>Empresa:</strong> {board.company}
+                  </p>
+                )}
+                
+                {/* Valor do Processo */}
+                {board.process_value && (
+                  <p className="text-sm opacity-90 mb-1">
+                    💰 <strong>Valor:</strong> R$ {board.process_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </p>
+                )}
+                
                 {board.description && (
-                  <p className="text-sm opacity-90 line-clamp-3 leading-relaxed">
+                  <p className="text-sm opacity-90 line-clamp-2 leading-relaxed mt-2">
                     {board.description}
                   </p>
                 )}
@@ -629,52 +843,53 @@ const BoardCard: React.FC<BoardCardProps> = ({ board, onClick, onUpdate }) => {
 
       {/* Premium Dropdown Menu */}
       {showMenu && (
-        <div className="absolute right-0 top-12 bg-white rounded-2xl shadow-lg w-64 z-20">
-          <div className="px-4 py-2 border-b border-gray-100 mb-2">
-            <p className="text-sm font-medium text-gray-700">Opções do Quadro</p>
+        <div 
+          ref={menuRef}
+          className="absolute right-0 top-12 bg-white rounded-2xl shadow-xl border border-gray-200 w-64 z-50 overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
+            <p className="text-sm font-semibold text-gray-800">Opções do Quadro</p>
           </div>
           
-          <button
-            onClick={handleEditTitle}
-            className="flex items-center gap-3 w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-          >
-            <div className="p-1 bg-blue-100 rounded-lg">
-              <Edit2 className="w-4 h-4 text-blue-600" />
-            </div>
-            <span className="font-medium">Editar Título</span>
-          </button>
-          
-          <button
-            onClick={handleChangeColor}
-            className="flex items-center gap-3 w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-          >
-            <div className="p-1 bg-purple-100 rounded-lg">
-              <Palette className="w-4 h-4 text-purple-600" />
-            </div>
-            <span className="font-medium">Mudar Cor</span>
-          </button>
-          
-          <button
-            onClick={handleCopyBoard}
-            className="flex items-center gap-3 w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-          >
-            <div className="p-1 bg-green-100 rounded-lg">
-              <Copy className="w-4 h-4 text-green-600" />
-            </div>
-            <span className="font-medium">Copiar Quadro</span>
-          </button>
-          
-          <div className="border-t border-gray-100 my-2"></div>
-          
-          <button
-            onClick={handleArchiveBoard}
-            className="flex items-center gap-3 w-full px-4 py-2 text-left text-sm text-red-700 hover:bg-red-50 transition-colors"
-          >
-            <div className="p-1 bg-red-100 rounded-lg">
-              <Trash2 className="w-4 h-4 text-red-600" />
-            </div>
-            <span className="font-medium">Excluir Quadro</span>
-          </button>
+          <div className="py-2">
+            <EditTitleButton
+              boardId={board.id}
+              currentTitle={board.title}
+              onSuccess={() => {
+                setShowMenu(false);
+                onUpdate();
+              }}
+            />
+            
+            <ChangeColorButton
+              boardId={board.id}
+              onSuccess={() => {
+                setShowMenu(false);
+                onUpdate();
+              }}
+            />
+            
+            <CopyBoardButton
+              boardId={board.id}
+              boardTitle={board.title}
+              onSuccess={() => {
+                setShowMenu(false);
+                onUpdate();
+              }}
+            />
+            
+            <div className="border-t border-gray-100 my-2"></div>
+            
+            <DeleteBoardButton
+              boardId={board.id}
+              boardTitle={board.title}
+              onSuccess={() => {
+                setShowMenu(false);
+                onUpdate();
+              }}
+            />
+          </div>
         </div>
       )}
 

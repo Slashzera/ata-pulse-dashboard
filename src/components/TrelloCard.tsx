@@ -75,34 +75,44 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({ card, boardId, listId, o
     }
 
     try {
-      console.log('Salvando título:', { cardId: card.id, oldTitle: card.title, newTitle });
+      console.log('💾 Salvando título instantaneamente:', { cardId: card.id, oldTitle: card.title, newTitle });
       
-      const result = await updateCardTitle(card.id, newTitle);
-      console.log('Título salvo com sucesso:', result);
-      
-      // Atualizar o estado local imediatamente
+      // ATUALIZAÇÃO OTIMISTA - Atualizar UI imediatamente
+      const originalTitle = card.title;
       card.title = newTitle;
       
-      // Chamar callback de atualização
-      if (onUpdate) {
-        onUpdate();
-      }
-      
       setIsEditingTitle(false);
       // Notificar que parou de editar
       if (onEditingChange) {
         onEditingChange(false);
       }
+      
+      // Salvar no servidor em background
+      const result = await updateCardTitle(card.id, newTitle);
+      console.log('✅ Título salvo no servidor:', result);
+      
+      // Chamar callback de atualização para sincronizar
+      if (onUpdate) {
+        setTimeout(() => onUpdate(), 500); // Sincronização leve
+      }
+      
     } catch (error) {
-      console.error('Erro detalhado ao salvar título:', error);
+      console.error('❌ Erro ao salvar título:', error);
+      
+      // Reverter mudança otimista em caso de erro
+      card.title = card.title; // Manter o valor atual
+      setEditTitle(card.title);
+      
       alert(`Erro ao salvar título: ${error.message || 'Erro desconhecido'}`);
       
-      // Reverter para o título original em caso de erro
-      setEditTitle(card.title);
-      setIsEditingTitle(false);
       // Notificar que parou de editar
       if (onEditingChange) {
         onEditingChange(false);
+      }
+      
+      // Forçar atualização em caso de erro
+      if (onUpdate) {
+        onUpdate();
       }
     }
   };

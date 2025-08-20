@@ -1,7 +1,7 @@
 import React from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { DraggableCard } from './DraggableCard';
+import { OptimizedCardList } from '../OptimizedCardList';
 
 interface DroppableListProps {
   list: any;
@@ -25,22 +25,17 @@ export const DroppableList: React.FC<DroppableListProps> = ({
   return (
     <div
       ref={setNodeRef}
-      className={`min-h-[20px] transition-colors ${
-        isOver ? 'bg-blue-50 ring-2 ring-blue-200' : ''
+      className={`min-h-[20px] transition-all duration-200 rounded-lg ${
+        isOver ? 'bg-gradient-to-br from-cyan-50/50 to-purple-50/50 ring-2 ring-cyan-300/50 shadow-lg' : ''
       }`}
     >
       <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
-        <div className="space-y-1">
-          {list.cards?.map((card: any) => (
-            <DraggableCard
-              key={card.id}
-              card={card}
-              boardId={boardId}
-              listId={list.id}
-              onUpdate={onUpdate}
-            />
-          ))}
-        </div>
+        <OptimizedCardList
+          cards={list.cards || []}
+          boardId={boardId}
+          listId={list.id}
+          onUpdate={onUpdate}
+        />
       </SortableContext>
       {children}
     </div>

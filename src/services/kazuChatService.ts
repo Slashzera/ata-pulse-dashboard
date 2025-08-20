@@ -94,7 +94,7 @@ export const sendChatMessage = async (
 
   try {
     console.log('🔄 Iniciando requisição para OpenRouter...');
-    console.log('Modelo configurado:', OPENROUTER_CONFIG.model);
+    console.log('Modelo principal:', OPENROUTER_CONFIG.model);
     console.log('Mensagem do usuário:', message);
 
     // Preparar mensagens para o OpenRouter
@@ -121,63 +121,32 @@ export const sendChatMessage = async (
       content: message
     });
 
-    const requestBody = {
-      model: OPENROUTER_CONFIG.model,
-      messages: messages,
-      max_tokens: OPENROUTER_CONFIG.maxTokens,
-      temperature: OPENROUTER_CONFIG.temperature,
-      top_p: OPENROUTER_CONFIG.topP,
-      frequency_penalty: OPENROUTER_CONFIG.frequencyPenalty,
-      presence_penalty: OPENROUTER_CONFIG.presencePenalty
-    };
+    // Lista de modelos para tentar (principal + fallbacks)
+    const modelsToTry = [OPENROUTER_CONFIG.model, ...OPENROUTER_CONFIG.fallbackModels];
+    
+    let lastError: Error | null = null;
 
-    console.log('📤 Enviando requisição:', requestBody);
-
-    // Fazer requisição para OpenRouter
-    const response = await fetch(OPENROUTER_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': window.location.origin,
-        'X-Title': 'KazuFlow Chatbot'
-      },
-      body: JSON.stringify(requestBody)
-    });
-
-    console.log('📥 Status da resposta:', response.status, response.statusText);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Erro OpenRouter:', response.status, errorText);
-      
-      if (response.status === 401) {
-        throw new Error('Chave da API inválida. Verifique a configuração VITE_OPENROUTER_API_KEY');
-      } else if (response.status === 429) {
-        throw new Error('Limite de requisições excedido. Tente novamente em alguns minutos');
-      } else {
-        throw new Error(`Erro na API OpenRouter: ${response.status}`);
+    // Tentar cada modelo até um funcionar
+    for (const model of modelsToTry) {
+      try {
+        const result = await tryWithModel(model, messages);
+        return result;
+      } catch (error: any) {
+        console.warn(`❌ Modelo ${model} falhou:`, error.message);
+        lastError = error;
+        
+        // Se for erro de autenticação, não tentar outros modelos
+        if (error.message.includes('401') || error.message.includes('inválida')) {
+          throw error;
+        }
+        
+        // Continuar para o próximo modelo
+        continue;
       }
     }
 
-    const data: OpenRouterResponse = await response.json();
-
-    console.log('Resposta completa da API:', data);
-
-    if (!data.choices || data.choices.length === 0) {
-      console.error('Estrutura da resposta:', data);
-      throw new Error('Resposta inválida da API - sem choices');
-    }
-
-    const assistantMessage = data.choices[0].message?.content;
-
-    if (!assistantMessage || assistantMessage.trim() === '') {
-      console.error('Mensagem vazia ou undefined:', data.choices[0]);
-      throw new Error('Resposta vazia da API - conteúdo não encontrado');
-    }
-
-    console.log('Mensagem recebida:', assistantMessage);
-    return assistantMessage.trim();
+    // Se chegou aqui, todos os modelos falharam
+    throw new Error(`Todos os modelos falharam. Último erro: ${lastError?.message || 'Desconhecido'}`);
 
   } catch (error: any) {
     console.error('Erro no serviço de chat Kazu:', error);

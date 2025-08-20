@@ -32,8 +32,9 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
+    transition: isDragging ? 'none' : transition, // Remove transição durante drag para suavidade
+    opacity: isDragging ? 0.8 : 1,
+    zIndex: isDragging ? 1000 : 'auto',
   };
 
   // Aplicar listeners condicionalmente

@@ -36,7 +36,9 @@ export const TrelloDragDropContext: React.FC<DragDropContextProps> = ({
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 10,
+        distance: 1, // Mínimo para resposta instantânea
+        tolerance: 2, // Reduzido para maior sensibilidade
+        delay: 0, // Zero delay para início imediato
       },
     }),
     useSensor(KeyboardSensor, {
@@ -64,19 +66,28 @@ export const TrelloDragDropContext: React.FC<DragDropContextProps> = ({
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     
-    // Limpar estados de drag
+    // Limpar estados de drag IMEDIATAMENTE
     setActiveCard(null);
     setIsDragging(false);
 
     // Prevenir processamento duplo
-    if (isProcessing) return;
+    if (isProcessing) {
+      console.log('⚠️ Já processando, ignorando...');
+      return;
+    }
 
-    if (!over || !active) return;
+    if (!over || !active) {
+      console.log('⚠️ Drag cancelado - sem destino válido');
+      return;
+    }
 
     const activeId = active.id as string;
     const overId = over.id as string;
 
-    if (activeId === overId) return;
+    if (activeId === overId) {
+      console.log('⚠️ Mesmo local - sem movimentação');
+      return;
+    }
 
     // Encontrar listas de origem e destino
     const sourceList = lists.find(list => 
@@ -84,7 +95,7 @@ export const TrelloDragDropContext: React.FC<DragDropContextProps> = ({
     );
 
     if (!sourceList) {
-      console.warn('Lista de origem não encontrada para o cartão:', activeId);
+      console.warn('❌ Lista de origem não encontrada para o cartão:', activeId);
       return;
     }
 
@@ -93,7 +104,7 @@ export const TrelloDragDropContext: React.FC<DragDropContextProps> = ({
                       lists.find(list => list.cards?.some((card: any) => card.id === overId));
 
     if (!targetList) {
-      console.warn('Lista de destino não encontrada para:', overId);
+      console.warn('❌ Lista de destino não encontrada para:', overId);
       return;
     }
 
@@ -109,30 +120,44 @@ export const TrelloDragDropContext: React.FC<DragDropContextProps> = ({
       newPosition = overCardIndex !== undefined ? overCardIndex : 0;
     }
 
-    // Marcar como processando para prevenir operações simultâneas
+    // ATUALIZAÇÃO OTIMISTA - Mover cartão na UI imediatamente
+    const cardToMove = sourceList.cards?.find((card: any) => card.id === activeId);
+    if (cardToMove) {
+      // Remover da lista de origem
+      sourceList.cards = sourceList.cards?.filter((card: any) => card.id !== activeId) || [];
+      
+      // Adicionar na lista de destino na posição correta
+      const targetCards = [...(targetList.cards || [])];
+      targetCards.splice(newPosition, 0, { ...cardToMove, list_id: targetList.id });
+      targetList.cards = targetCards;
+    }
+
+    // Marcar como processando IMEDIATAMENTE
     setIsProcessing(true);
 
     try {
-      // Executar a ação apropriada
+      // Executar a ação no servidor em background
       if (sourceList.id === targetList.id) {
         // Reordenação dentro da mesma lista
         const activeCardIndex = sourceList.cards?.findIndex((card: any) => card.id === activeId);
         if (activeCardIndex !== undefined && activeCardIndex !== newPosition) {
-          console.log('Reordenando na mesma lista:', { activeCardIndex, newPosition });
+          console.log('🔄 Reordenando na mesma lista:', { activeCardIndex, newPosition });
           await onCardReorder(sourceList.id, activeId, newPosition);
         }
       } else {
         // Movimentação entre listas diferentes
-        console.log('Movendo entre listas:', { sourceList: sourceList.id, targetList: targetList.id, newPosition });
+        console.log('🔄 Movendo entre listas:', { sourceList: sourceList.id, targetList: targetList.id, newPosition });
         await onCardMove(activeId, sourceList.id, targetList.id, newPosition);
       }
     } catch (error) {
-      console.error('Erro durante drag and drop:', error);
+      console.error('❌ Erro durante drag and drop:', error);
+      // Em caso de erro, reverter a mudança otimista
+      window.location.reload(); // Força reload para sincronizar
     } finally {
-      // Sempre limpar o estado de processamento
+      // Limpar o estado de processamento RAPIDAMENTE
       setTimeout(() => {
         setIsProcessing(false);
-      }, 500); // Pequeno delay para evitar operações muito rápidas
+      }, 50); // Delay ainda menor para máxima responsividade
     }
   };
 

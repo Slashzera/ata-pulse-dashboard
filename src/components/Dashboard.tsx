@@ -7,14 +7,14 @@ import { Calendar, FileText, Users, DollarSign, TrendingUp, AlertTriangle, Clipb
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 import { useAtas } from '@/hooks/useAtas';
 import { usePedidos } from '@/hooks/usePedidos';
-import ATATable from '@/components/ATATable';
+import ModernATATable from '@/components/ModernATATable';
 import PedidosSection from '@/components/PedidosSection';
 import CreateContratoAntigoDialog from '@/components/CreateContratoAntigoDialog';
 import CreateAdesaoDialog from '@/components/CreateAdesaoDialog';
 import CreateAquisicaoGlobalDialog from '@/components/CreateAquisicaoGlobalDialog';
 import AfoControle from '@/components/AfoControle';
 import AfoAssinadas from '@/components/AfoAssinadas';
-import ProcessosAdministrativos from '@/components/ProcessosAdministrativos';
+import ModernProcessosAdministrativos from '@/components/ModernProcessosAdministrativos';
 import TACTable from './TACTable';
 import TrashManager from '@/components/TrashManager';
 import SQLEditor from '@/components/SQLEditor';
@@ -54,27 +54,27 @@ const Dashboard: React.FC<DashboardProps> = ({
   const pedidos = propPedidos || fetchedPedidos;
 
   const totalAtas = atas.length;
-  
+
   // Separar ATAs por categoria usando a categoria real do banco
   const atasNormais = atas.filter(ata => ata.category === 'normal');
   const atasAdesao = atas.filter(ata => ata.category === 'adesao');
   const atasAquisicaoGlobal = atas.filter(ata => ata.category === 'aquisicao');
   const atasContratosAntigos = atas.filter(ata => ata.category === 'antigo');
-  
+
   // Calcular saldos por categoria
   const saldoATAsNormais = atasNormais.reduce((acc, ata) => acc + (ata.saldo_disponivel || 0), 0);
   const saldoAdesao = atasAdesao.reduce((acc, ata) => acc + (ata.saldo_disponivel || 0), 0);
   const saldoAquisicaoGlobal = atasAquisicaoGlobal.reduce((acc, ata) => acc + (ata.saldo_disponivel || 0), 0);
   const saldoContratosAntigos = atasContratosAntigos.reduce((acc, ata) => acc + (ata.saldo_disponivel || 0), 0);
-  
+
   const totalSaldoDisponivel = saldoATAsNormais + saldoAdesao + saldoAquisicaoGlobal + saldoContratosAntigos;
-  
+
   // Separar pedidos por categoria usando a categoria da ATA vinculada
   const pedidosNormais = pedidos.filter(p => p.ata_category === 'normal');
   const pedidosAdesao = pedidos.filter(p => p.ata_category === 'adesao');
   const pedidosAquisicao = pedidos.filter(p => p.ata_category === 'aquisicao');
   const pedidosAntigos = pedidos.filter(p => p.ata_category === 'antigo');
-  
+
   const totalPedidos = pedidos.length;
   const pedidosPendentes = pedidos.filter(p => p.status === 'pendente').length;
   const pedidosFinalizados = pedidos.filter(p => p.status === 'finalizado').length;
@@ -84,7 +84,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const today = new Date();
   const fourMonthsFromNow = new Date();
   fourMonthsFromNow.setMonth(today.getMonth() + 4);
-  
+
   const atasVencendo = atas.filter(ata => {
     if (!ata.vencimento) return false;
     const vencimento = new Date(ata.vencimento);
@@ -143,16 +143,16 @@ const Dashboard: React.FC<DashboardProps> = ({
     console.log('handleBackToMain chamado - voltando para dashboard');
     console.log('activeTab atual:', activeTab);
     console.log('onViewChange existe?', !!onViewChange);
-    
+
     try {
       setActiveTab('dashboard');
       console.log('setActiveTab("dashboard") executado');
-      
+
       if (onViewChange) {
         onViewChange('dashboard');
         console.log('onViewChange("dashboard") executado');
       }
-      
+
       console.log('handleBackToMain concluído com sucesso');
     } catch (error) {
       console.error('Erro em handleBackToMain:', error);
@@ -168,8 +168,8 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   if (activeTab === 'atas') {
     return (
-      <ATATable 
-        atas={atas} 
+      <ModernATATable
+        atas={atas}
         category="normal"
         title="Registro de Contratos de Fornecimento - ATAs"
         headerColor="bg-gradient-to-r from-blue-600 to-indigo-600"
@@ -180,8 +180,8 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   if (activeTab === 'adesoes') {
     return (
-      <ATATable 
-        atas={atas} 
+      <ModernATATable
+        atas={atas}
         category="adesao"
         title="Registro de Contratos de Fornecimento - Adesões"
         headerColor="bg-gradient-to-r from-green-600 to-emerald-600"
@@ -192,8 +192,8 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   if (activeTab === 'saldo-atas') {
     return (
-      <ATATable 
-        atas={atas} 
+      <ModernATATable
+        atas={atas}
         category="antigo"
         title="Registro de Contratos de Fornecimento - Saldo de ATAs (Contratos Antigos)"
         headerColor="bg-gradient-to-r from-orange-600 to-amber-600"
@@ -204,8 +204,8 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   if (activeTab === 'aquisicao-global') {
     return (
-      <ATATable 
-        atas={atas} 
+      <ModernATATable
+        atas={atas}
         category="aquisicao"
         title="Registro de Contratos de Fornecimento - Aquisição Global"
         headerColor="bg-gradient-to-r from-purple-600 to-violet-600"
@@ -227,7 +227,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   }
 
   if (activeTab === 'processos-administrativos') {
-    return <ProcessosAdministrativos onBack={handleBackToMain} />;
+    return <ModernProcessosAdministrativos onBack={handleBackToMain} />;
   }
 
 
@@ -254,7 +254,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             Novo TAC
           </button>
         </div>
-        
+
         <TACTable onBack={handleBackToMain} />
       </div>
     );
@@ -294,21 +294,19 @@ const Dashboard: React.FC<DashboardProps> = ({
 
           {/* Grid de Botões Modernos */}
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-11 gap-4">
-            
+
             {/* Dashboard */}
             <button
               onClick={() => handleTabChange('dashboard')}
-              className={`group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:scale-105 hover:shadow-xl ${
-                activeTab === 'dashboard' 
-                  ? 'bg-gradient-to-br from-[#203A8A] to-[#203A8A]/80 text-white shadow-lg' 
-                  : 'bg-white hover:bg-gradient-to-br hover:from-blue-50 hover:to-indigo-50 text-gray-700 border border-gray-200 hover:border-blue-300'
-              }`}
+              className={`group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:scale-105 hover:shadow-xl ${activeTab === 'dashboard'
+                ? 'bg-gradient-to-br from-[#203A8A] to-[#203A8A]/80 text-white shadow-lg'
+                : 'bg-white hover:bg-gradient-to-br hover:from-blue-50 hover:to-indigo-50 text-gray-700 border border-gray-200 hover:border-blue-300'
+                }`}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-indigo-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="relative flex flex-col items-center gap-3">
-                <div className={`p-2 rounded-xl transition-colors duration-300 ${
-                  activeTab === 'dashboard' ? 'bg-white/20' : 'bg-blue-100 group-hover:bg-blue-200'
-                }`}>
+                <div className={`p-2 rounded-xl transition-colors duration-300 ${activeTab === 'dashboard' ? 'bg-white/20' : 'bg-blue-100 group-hover:bg-blue-200'
+                  }`}>
                   <TrendingUp className={`h-6 w-6 ${activeTab === 'dashboard' ? 'text-white' : 'text-blue-600'}`} />
                 </div>
                 <span className="text-sm font-semibold">Dashboard</span>
@@ -318,17 +316,15 @@ const Dashboard: React.FC<DashboardProps> = ({
             {/* ATAs */}
             <button
               onClick={() => handleTabChange('atas')}
-              className={`group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:scale-105 hover:shadow-xl ${
-                activeTab === 'atas' 
-                  ? 'bg-gradient-to-br from-[#203A8A] to-[#203A8A]/80 text-white shadow-lg' 
-                  : 'bg-white hover:bg-gradient-to-br hover:from-blue-50 hover:to-indigo-50 text-gray-700 border border-gray-200 hover:border-blue-300'
-              }`}
+              className={`group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:scale-105 hover:shadow-xl ${activeTab === 'atas'
+                ? 'bg-gradient-to-br from-[#203A8A] to-[#203A8A]/80 text-white shadow-lg'
+                : 'bg-white hover:bg-gradient-to-br hover:from-blue-50 hover:to-indigo-50 text-gray-700 border border-gray-200 hover:border-blue-300'
+                }`}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-indigo-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="relative flex flex-col items-center gap-3">
-                <div className={`p-2 rounded-xl transition-colors duration-300 ${
-                  activeTab === 'atas' ? 'bg-white/20' : 'bg-blue-100 group-hover:bg-blue-200'
-                }`}>
+                <div className={`p-2 rounded-xl transition-colors duration-300 ${activeTab === 'atas' ? 'bg-white/20' : 'bg-blue-100 group-hover:bg-blue-200'
+                  }`}>
                   <FileText className={`h-6 w-6 ${activeTab === 'atas' ? 'text-white' : 'text-blue-600'}`} />
                 </div>
                 <span className="text-sm font-semibold">ATAs</span>
@@ -338,17 +334,15 @@ const Dashboard: React.FC<DashboardProps> = ({
             {/* Adesões */}
             <button
               onClick={() => handleTabChange('adesoes')}
-              className={`group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:scale-105 hover:shadow-xl ${
-                activeTab === 'adesoes' 
-                  ? 'bg-gradient-to-br from-[#203A8A] to-[#203A8A]/80 text-white shadow-lg' 
-                  : 'bg-white hover:bg-gradient-to-br hover:from-emerald-50 hover:to-green-50 text-gray-700 border border-gray-200 hover:border-emerald-300'
-              }`}
+              className={`group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:scale-105 hover:shadow-xl ${activeTab === 'adesoes'
+                ? 'bg-gradient-to-br from-[#203A8A] to-[#203A8A]/80 text-white shadow-lg'
+                : 'bg-white hover:bg-gradient-to-br hover:from-emerald-50 hover:to-green-50 text-gray-700 border border-gray-200 hover:border-emerald-300'
+                }`}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/20 to-green-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="relative flex flex-col items-center gap-3">
-                <div className={`p-2 rounded-xl transition-colors duration-300 ${
-                  activeTab === 'adesoes' ? 'bg-white/20' : 'bg-emerald-100 group-hover:bg-emerald-200'
-                }`}>
+                <div className={`p-2 rounded-xl transition-colors duration-300 ${activeTab === 'adesoes' ? 'bg-white/20' : 'bg-emerald-100 group-hover:bg-emerald-200'
+                  }`}>
                   <UserPlus className={`h-6 w-6 ${activeTab === 'adesoes' ? 'text-white' : 'text-emerald-600'}`} />
                 </div>
                 <span className="text-sm font-semibold">Adesões</span>
@@ -358,17 +352,15 @@ const Dashboard: React.FC<DashboardProps> = ({
             {/* Saldo de ATAs */}
             <button
               onClick={() => handleTabChange('saldo-atas')}
-              className={`group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:scale-105 hover:shadow-xl ${
-                activeTab === 'saldo-atas' 
-                  ? 'bg-gradient-to-br from-[#203A8A] to-[#203A8A]/80 text-white shadow-lg' 
-                  : 'bg-white hover:bg-gradient-to-br hover:from-amber-50 hover:to-orange-50 text-gray-700 border border-gray-200 hover:border-amber-300'
-              }`}
+              className={`group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:scale-105 hover:shadow-xl ${activeTab === 'saldo-atas'
+                ? 'bg-gradient-to-br from-[#203A8A] to-[#203A8A]/80 text-white shadow-lg'
+                : 'bg-white hover:bg-gradient-to-br hover:from-amber-50 hover:to-orange-50 text-gray-700 border border-gray-200 hover:border-amber-300'
+                }`}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-amber-400/20 to-orange-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="relative flex flex-col items-center gap-3">
-                <div className={`p-2 rounded-xl transition-colors duration-300 ${
-                  activeTab === 'saldo-atas' ? 'bg-white/20' : 'bg-amber-100 group-hover:bg-amber-200'
-                }`}>
+                <div className={`p-2 rounded-xl transition-colors duration-300 ${activeTab === 'saldo-atas' ? 'bg-white/20' : 'bg-amber-100 group-hover:bg-amber-200'
+                  }`}>
                   <Archive className={`h-6 w-6 ${activeTab === 'saldo-atas' ? 'text-white' : 'text-amber-600'}`} />
                 </div>
                 <span className="text-sm font-semibold text-center leading-tight">Saldo de ATAs</span>
@@ -378,17 +370,15 @@ const Dashboard: React.FC<DashboardProps> = ({
             {/* Aquisição Global */}
             <button
               onClick={() => handleTabChange('aquisicao-global')}
-              className={`group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:scale-105 hover:shadow-xl ${
-                activeTab === 'aquisicao-global' 
-                  ? 'bg-gradient-to-br from-[#203A8A] to-[#203A8A]/80 text-white shadow-lg' 
-                  : 'bg-white hover:bg-gradient-to-br hover:from-purple-50 hover:to-violet-50 text-gray-700 border border-gray-200 hover:border-purple-300'
-              }`}
+              className={`group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:scale-105 hover:shadow-xl ${activeTab === 'aquisicao-global'
+                ? 'bg-gradient-to-br from-[#203A8A] to-[#203A8A]/80 text-white shadow-lg'
+                : 'bg-white hover:bg-gradient-to-br hover:from-purple-50 hover:to-violet-50 text-gray-700 border border-gray-200 hover:border-purple-300'
+                }`}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-purple-400/20 to-violet-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="relative flex flex-col items-center gap-3">
-                <div className={`p-2 rounded-xl transition-colors duration-300 ${
-                  activeTab === 'aquisicao-global' ? 'bg-white/20' : 'bg-purple-100 group-hover:bg-purple-200'
-                }`}>
+                <div className={`p-2 rounded-xl transition-colors duration-300 ${activeTab === 'aquisicao-global' ? 'bg-white/20' : 'bg-purple-100 group-hover:bg-purple-200'
+                  }`}>
                   <Globe className={`h-6 w-6 ${activeTab === 'aquisicao-global' ? 'text-white' : 'text-purple-600'}`} />
                 </div>
                 <span className="text-sm font-semibold text-center leading-tight">Aquisição Global</span>
@@ -398,17 +388,15 @@ const Dashboard: React.FC<DashboardProps> = ({
             {/* Pedidos */}
             <button
               onClick={() => handleTabChange('pedidos')}
-              className={`group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:scale-105 hover:shadow-xl ${
-                activeTab === 'pedidos' 
-                  ? 'bg-gradient-to-br from-[#203A8A] to-[#203A8A]/80 text-white shadow-lg' 
-                  : 'bg-white hover:bg-gradient-to-br hover:from-yellow-50 hover:to-amber-50 text-gray-700 border border-gray-200 hover:border-yellow-300'
-              }`}
+              className={`group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:scale-105 hover:shadow-xl ${activeTab === 'pedidos'
+                ? 'bg-gradient-to-br from-[#203A8A] to-[#203A8A]/80 text-white shadow-lg'
+                : 'bg-white hover:bg-gradient-to-br hover:from-yellow-50 hover:to-amber-50 text-gray-700 border border-gray-200 hover:border-yellow-300'
+                }`}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-amber-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="relative flex flex-col items-center gap-3">
-                <div className={`p-2 rounded-xl transition-colors duration-300 ${
-                  activeTab === 'pedidos' ? 'bg-white/20' : 'bg-yellow-100 group-hover:bg-yellow-200'
-                }`}>
+                <div className={`p-2 rounded-xl transition-colors duration-300 ${activeTab === 'pedidos' ? 'bg-white/20' : 'bg-yellow-100 group-hover:bg-yellow-200'
+                  }`}>
                   <Receipt className={`h-6 w-6 ${activeTab === 'pedidos' ? 'text-white' : 'text-yellow-600'}`} />
                 </div>
                 <span className="text-sm font-semibold">Pedidos</span>
@@ -418,17 +406,15 @@ const Dashboard: React.FC<DashboardProps> = ({
             {/* Controle AFO */}
             <button
               onClick={() => handleTabChange('afo-controle')}
-              className={`group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:scale-105 hover:shadow-xl ${
-                activeTab === 'afo-controle' 
-                  ? 'bg-gradient-to-br from-[#203A8A] to-[#203A8A]/80 text-white shadow-lg' 
-                  : 'bg-white hover:bg-gradient-to-br hover:from-red-50 hover:to-rose-50 text-gray-700 border border-gray-200 hover:border-red-300'
-              }`}
+              className={`group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:scale-105 hover:shadow-xl ${activeTab === 'afo-controle'
+                ? 'bg-gradient-to-br from-[#203A8A] to-[#203A8A]/80 text-white shadow-lg'
+                : 'bg-white hover:bg-gradient-to-br hover:from-red-50 hover:to-rose-50 text-gray-700 border border-gray-200 hover:border-red-300'
+                }`}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-red-400/20 to-rose-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="relative flex flex-col items-center gap-3">
-                <div className={`p-2 rounded-xl transition-colors duration-300 ${
-                  activeTab === 'afo-controle' ? 'bg-white/20' : 'bg-red-100 group-hover:bg-red-200'
-                }`}>
+                <div className={`p-2 rounded-xl transition-colors duration-300 ${activeTab === 'afo-controle' ? 'bg-white/20' : 'bg-red-100 group-hover:bg-red-200'
+                  }`}>
                   <FileSignature className={`h-6 w-6 ${activeTab === 'afo-controle' ? 'text-white' : 'text-red-600'}`} />
                 </div>
                 <span className="text-sm font-semibold text-center leading-tight">Controle AFO</span>
@@ -438,17 +424,15 @@ const Dashboard: React.FC<DashboardProps> = ({
             {/* AFO Assinadas */}
             <button
               onClick={() => handleTabChange('afo-assinadas')}
-              className={`group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:scale-105 hover:shadow-xl ${
-                activeTab === 'afo-assinadas' 
-                  ? 'bg-gradient-to-br from-[#203A8A] to-[#203A8A]/80 text-white shadow-lg' 
-                  : 'bg-white hover:bg-gradient-to-br hover:from-cyan-50 hover:to-teal-50 text-gray-700 border border-gray-200 hover:border-cyan-300'
-              }`}
+              className={`group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:scale-105 hover:shadow-xl ${activeTab === 'afo-assinadas'
+                ? 'bg-gradient-to-br from-[#203A8A] to-[#203A8A]/80 text-white shadow-lg'
+                : 'bg-white hover:bg-gradient-to-br hover:from-cyan-50 hover:to-teal-50 text-gray-700 border border-gray-200 hover:border-cyan-300'
+                }`}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/20 to-teal-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="relative flex flex-col items-center gap-3">
-                <div className={`p-2 rounded-xl transition-colors duration-300 ${
-                  activeTab === 'afo-assinadas' ? 'bg-white/20' : 'bg-cyan-100 group-hover:bg-cyan-200'
-                }`}>
+                <div className={`p-2 rounded-xl transition-colors duration-300 ${activeTab === 'afo-assinadas' ? 'bg-white/20' : 'bg-cyan-100 group-hover:bg-cyan-200'
+                  }`}>
                   <FileText className={`h-6 w-6 ${activeTab === 'afo-assinadas' ? 'text-white' : 'text-cyan-600'}`} />
                 </div>
                 <span className="text-sm font-semibold text-center leading-tight">AFO Assinadas</span>
@@ -458,17 +442,15 @@ const Dashboard: React.FC<DashboardProps> = ({
             {/* Processos Administrativos */}
             <button
               onClick={() => handleTabChange('processos-administrativos')}
-              className={`group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:scale-105 hover:shadow-xl ${
-                activeTab === 'processos-administrativos' 
-                  ? 'bg-gradient-to-br from-[#203A8A] to-[#203A8A]/80 text-white shadow-lg' 
-                  : 'bg-white hover:bg-gradient-to-br hover:from-teal-50 hover:to-emerald-50 text-gray-700 border border-gray-200 hover:border-teal-300'
-              }`}
+              className={`group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:scale-105 hover:shadow-xl ${activeTab === 'processos-administrativos'
+                ? 'bg-gradient-to-br from-[#203A8A] to-[#203A8A]/80 text-white shadow-lg'
+                : 'bg-white hover:bg-gradient-to-br hover:from-teal-50 hover:to-emerald-50 text-gray-700 border border-gray-200 hover:border-teal-300'
+                }`}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-teal-400/20 to-emerald-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="relative flex flex-col items-center gap-3">
-                <div className={`p-2 rounded-xl transition-colors duration-300 ${
-                  activeTab === 'processos-administrativos' ? 'bg-white/20' : 'bg-teal-100 group-hover:bg-teal-200'
-                }`}>
+                <div className={`p-2 rounded-xl transition-colors duration-300 ${activeTab === 'processos-administrativos' ? 'bg-white/20' : 'bg-teal-100 group-hover:bg-teal-200'
+                  }`}>
                   <FolderOpen className={`h-6 w-6 ${activeTab === 'processos-administrativos' ? 'text-white' : 'text-teal-600'}`} />
                 </div>
                 <span className="text-xs font-semibold text-center leading-tight">Processos<br />Administrativos</span>
@@ -478,17 +460,15 @@ const Dashboard: React.FC<DashboardProps> = ({
             {/* TAC */}
             <button
               onClick={() => handleTabChange('tac')}
-              className={`group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:scale-105 hover:shadow-xl ${
-                activeTab === 'tac' 
-                  ? 'bg-gradient-to-br from-[#203A8A] to-[#203A8A]/80 text-white shadow-lg' 
-                  : 'bg-white hover:bg-gradient-to-br hover:from-pink-50 hover:to-rose-50 text-gray-700 border border-gray-200 hover:border-pink-300'
-              }`}
+              className={`group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:scale-105 hover:shadow-xl ${activeTab === 'tac'
+                ? 'bg-gradient-to-br from-[#203A8A] to-[#203A8A]/80 text-white shadow-lg'
+                : 'bg-white hover:bg-gradient-to-br hover:from-pink-50 hover:to-rose-50 text-gray-700 border border-gray-200 hover:border-pink-300'
+                }`}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-pink-400/20 to-rose-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="relative flex flex-col items-center gap-3">
-                <div className={`p-2 rounded-xl transition-colors duration-300 ${
-                  activeTab === 'tac' ? 'bg-white/20' : 'bg-pink-100 group-hover:bg-pink-200'
-                }`}>
+                <div className={`p-2 rounded-xl transition-colors duration-300 ${activeTab === 'tac' ? 'bg-white/20' : 'bg-pink-100 group-hover:bg-pink-200'
+                  }`}>
                   <FileCheck className={`h-6 w-6 ${activeTab === 'tac' ? 'text-white' : 'text-pink-600'}`} />
                 </div>
                 <span className="text-sm font-semibold">TAC</span>
@@ -498,17 +478,15 @@ const Dashboard: React.FC<DashboardProps> = ({
             {/* KazuFlow */}
             <button
               onClick={() => handleTabChange('kazuflow')}
-              className={`group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:scale-105 hover:shadow-xl ${
-                activeTab === 'kazuflow' 
-                  ? 'bg-gradient-to-br from-[#203A8A] to-[#203A8A]/80 text-white shadow-lg' 
-                  : 'bg-white hover:bg-gradient-to-br hover:from-violet-50 hover:to-purple-50 text-gray-700 border border-gray-200 hover:border-violet-300'
-              }`}
+              className={`group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:scale-105 hover:shadow-xl ${activeTab === 'kazuflow'
+                ? 'bg-gradient-to-br from-[#203A8A] to-[#203A8A]/80 text-white shadow-lg'
+                : 'bg-white hover:bg-gradient-to-br hover:from-violet-50 hover:to-purple-50 text-gray-700 border border-gray-200 hover:border-violet-300'
+                }`}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-violet-400/20 to-purple-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="relative flex flex-col items-center gap-3">
-                <div className={`p-2 rounded-xl transition-colors duration-300 ${
-                  activeTab === 'kazuflow' ? 'bg-white/20' : 'bg-violet-100 group-hover:bg-violet-200'
-                }`}>
+                <div className={`p-2 rounded-xl transition-colors duration-300 ${activeTab === 'kazuflow' ? 'bg-white/20' : 'bg-violet-100 group-hover:bg-violet-200'
+                  }`}>
                   <Kanban className={`h-6 w-6 ${activeTab === 'kazuflow' ? 'text-white' : 'text-violet-600'}`} />
                 </div>
                 <span className="text-sm font-semibold">KazuFlow</span>
@@ -524,11 +502,10 @@ const Dashboard: React.FC<DashboardProps> = ({
                 {Array.from({ length: 11 }).map((_, i) => (
                   <div
                     key={i}
-                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                      i === ['dashboard', 'atas', 'adesoes', 'saldo-atas', 'aquisicao-global', 'pedidos', 'afo-controle', 'afo-assinadas', 'processos-administrativos', 'tac', 'kazuflow'].indexOf(activeTab)
-                        ? 'bg-[#203A8A] w-6' 
-                        : 'bg-gray-300'
-                    }`}
+                    className={`w-2 h-2 rounded-full transition-all duration-300 ${i === ['dashboard', 'atas', 'adesoes', 'saldo-atas', 'aquisicao-global', 'pedidos', 'afo-controle', 'afo-assinadas', 'processos-administrativos', 'tac', 'kazuflow'].indexOf(activeTab)
+                      ? 'bg-[#203A8A] w-6'
+                      : 'bg-gray-300'
+                      }`}
                   />
                 ))}
               </div>
@@ -681,12 +658,12 @@ const Dashboard: React.FC<DashboardProps> = ({
 
         {/* Gráficos Modernos - Layout Redesenhado */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          
+
           {/* Status dos Pedidos - Design Moderno */}
           <div className="relative group">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-indigo-400/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <Card className="relative bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/50 border-0 shadow-2xl hover:shadow-3xl transition-all duration-500 rounded-3xl overflow-hidden backdrop-blur-sm">
-              
+
               {/* Header Moderno */}
               <div className="relative bg-gradient-to-r from-[#203A8A] via-blue-600 to-indigo-600 p-6">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-indigo-600/20"></div>
@@ -713,7 +690,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                     <PieChart>
                       <defs>
                         <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-                          <feDropShadow dx="0" dy="4" stdDeviation="8" floodColor="rgba(0,0,0,0.1)"/>
+                          <feDropShadow dx="0" dy="4" stdDeviation="8" floodColor="rgba(0,0,0,0.1)" />
                         </filter>
                       </defs>
                       <Pie
@@ -729,8 +706,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                         filter="url(#shadow)"
                       >
                         {statusData.map((entry, index) => (
-                          <Cell 
-                            key={`cell-${index}`} 
+                          <Cell
+                            key={`cell-${index}`}
                             fill={entry.color}
                             style={{
                               filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))'
@@ -738,9 +715,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                           />
                         ))}
                       </Pie>
-                      <Tooltip 
+                      <Tooltip
                         formatter={(value: any, name: string) => [
-                          `${value} pedidos`, 
+                          `${value} pedidos`,
                           name
                         ]}
                         contentStyle={{
@@ -760,8 +737,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                   {statusData.map((entry, index) => (
                     <div key={index} className="flex items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-blue-50/30 rounded-2xl border border-gray-100/50 hover:shadow-md transition-all duration-300">
                       <div className="flex items-center gap-3">
-                        <div 
-                          className="w-4 h-4 rounded-full shadow-lg" 
+                        <div
+                          className="w-4 h-4 rounded-full shadow-lg"
                           style={{ backgroundColor: entry.color }}
                         />
                         <span className="font-semibold text-gray-800">{entry.name}</span>
@@ -783,7 +760,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div className="relative group">
             <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/20 to-teal-400/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <Card className="relative bg-gradient-to-br from-white via-emerald-50/30 to-teal-50/50 border-0 shadow-2xl hover:shadow-3xl transition-all duration-500 rounded-3xl overflow-hidden backdrop-blur-sm">
-              
+
               {/* Header Moderno */}
               <div className="relative bg-gradient-to-r from-[#203A8A] via-emerald-600 to-teal-600 p-6">
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/20 to-teal-600/20"></div>
@@ -810,7 +787,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                     <PieChart>
                       <defs>
                         <filter id="shadow2" x="-50%" y="-50%" width="200%" height="200%">
-                          <feDropShadow dx="0" dy="4" stdDeviation="8" floodColor="rgba(0,0,0,0.1)"/>
+                          <feDropShadow dx="0" dy="4" stdDeviation="8" floodColor="rgba(0,0,0,0.1)" />
                         </filter>
                       </defs>
                       <Pie
@@ -826,8 +803,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                         filter="url(#shadow2)"
                       >
                         {tipoATAData.map((entry, index) => (
-                          <Cell 
-                            key={`cell-${index}`} 
+                          <Cell
+                            key={`cell-${index}`}
                             fill={entry.color}
                             style={{
                               filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))'
@@ -835,9 +812,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                           />
                         ))}
                       </Pie>
-                      <Tooltip 
+                      <Tooltip
                         formatter={(value: any, name: string, props: any) => [
-                          formatCurrencyMillions(value), 
+                          formatCurrencyMillions(value),
                           `${props.payload.name}: ${formatCurrencyMillions(value)} (${props.payload.count} contratos)`
                         ]}
                         contentStyle={{
@@ -857,8 +834,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                   {tipoATAData.map((entry, index) => (
                     <div key={index} className="flex flex-col p-3 bg-gradient-to-br from-gray-50 to-emerald-50/30 rounded-2xl border border-gray-100/50 hover:shadow-md transition-all duration-300">
                       <div className="flex items-center gap-2 mb-2">
-                        <div 
-                          className="w-3 h-3 rounded-full shadow-lg" 
+                        <div
+                          className="w-3 h-3 rounded-full shadow-lg"
                           style={{ backgroundColor: entry.color }}
                         />
                         <span className="text-sm font-semibold text-gray-800">{entry.name}</span>
@@ -879,13 +856,13 @@ const Dashboard: React.FC<DashboardProps> = ({
         <div className="relative group">
           <div className="absolute inset-0 bg-gradient-to-r from-violet-400/20 to-purple-400/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           <Card className="relative bg-gradient-to-br from-white via-violet-50/30 to-purple-50/50 border-0 shadow-2xl hover:shadow-3xl transition-all duration-500 rounded-3xl overflow-hidden backdrop-blur-sm">
-            
+
             {/* Header Ultra Moderno */}
             <div className="relative bg-gradient-to-r from-[#203A8A] via-violet-600 to-purple-600 p-8">
               <div className="absolute inset-0 bg-gradient-to-r from-violet-600/20 to-purple-600/20"></div>
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16"></div>
               <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
-              
+
               <div className="relative flex items-center justify-between">
                 <div className="flex items-center gap-6">
                   <div className="bg-white/20 p-4 rounded-3xl backdrop-blur-sm shadow-xl">
@@ -900,7 +877,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="text-right">
                   <div className="bg-white/10 px-6 py-3 rounded-2xl backdrop-blur-sm border border-white/20">
                     <div className="text-white/80 text-sm font-medium">Total Geral</div>
@@ -912,13 +889,13 @@ const Dashboard: React.FC<DashboardProps> = ({
 
             {/* Conteúdo do Gráfico de Barras */}
             <CardContent className="p-8 bg-white/90 backdrop-blur-sm">
-              
+
               {/* Estatísticas Rápidas */}
               <div className="grid grid-cols-4 gap-4 mb-8">
                 {tipoATAData.map((entry, index) => (
                   <div key={index} className="text-center p-4 bg-gradient-to-br from-gray-50 to-violet-50/30 rounded-2xl border border-gray-100/50 hover:shadow-lg transition-all duration-300">
-                    <div 
-                      className="w-4 h-4 rounded-full mx-auto mb-2 shadow-lg" 
+                    <div
+                      className="w-4 h-4 rounded-full mx-auto mb-2 shadow-lg"
                       style={{ backgroundColor: entry.color }}
                     />
                     <div className="text-xs font-medium text-gray-600 mb-1">{entry.name}</div>
@@ -931,34 +908,34 @@ const Dashboard: React.FC<DashboardProps> = ({
               {/* Gráfico de Barras Moderno */}
               <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-3xl p-6 border border-gray-100/50 shadow-inner">
                 <ResponsiveContainer width="100%" height={350}>
-                  <BarChart 
-                    data={tipoATAData} 
+                  <BarChart
+                    data={tipoATAData}
                     margin={{ top: 30, right: 30, left: 20, bottom: 20 }}
                     barCategoryGap="20%"
                   >
                     <defs>
                       {tipoATAData.map((entry, index) => (
                         <linearGradient key={index} id={`gradient-${index}`} x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor={entry.color} stopOpacity={0.9}/>
-                          <stop offset="100%" stopColor={entry.color} stopOpacity={0.6}/>
+                          <stop offset="0%" stopColor={entry.color} stopOpacity={0.9} />
+                          <stop offset="100%" stopColor={entry.color} stopOpacity={0.6} />
                         </linearGradient>
                       ))}
                       <filter id="barShadow" x="-50%" y="-50%" width="200%" height="200%">
-                        <feDropShadow dx="0" dy="8" stdDeviation="4" floodColor="rgba(0,0,0,0.1)"/>
+                        <feDropShadow dx="0" dy="8" stdDeviation="4" floodColor="rgba(0,0,0,0.1)" />
                       </filter>
                     </defs>
-                    
-                    <CartesianGrid 
-                      strokeDasharray="3 3" 
-                      stroke="#e2e8f0" 
+
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="#e2e8f0"
                       opacity={0.3}
                       vertical={false}
                     />
-                    
-                    <XAxis 
-                      dataKey="name" 
-                      angle={0} 
-                      textAnchor="middle" 
+
+                    <XAxis
+                      dataKey="name"
+                      angle={0}
+                      textAnchor="middle"
                       height={80}
                       fontSize={12}
                       interval={0}
@@ -966,18 +943,18 @@ const Dashboard: React.FC<DashboardProps> = ({
                       fontWeight={600}
                       tick={{ fill: '#64748b' }}
                     />
-                    
-                    <YAxis 
-                      tickFormatter={formatCurrencyMillions} 
+
+                    <YAxis
+                      tickFormatter={formatCurrencyMillions}
                       stroke="#64748b"
                       fontWeight={500}
                       fontSize={12}
                       tick={{ fill: '#64748b' }}
                     />
-                    
-                    <Tooltip 
+
+                    <Tooltip
                       formatter={(value: any, name: string, props: any) => [
-                        formatCurrencyMillions(value), 
+                        formatCurrencyMillions(value),
                         `Saldo disponível`
                       ]}
                       labelFormatter={(label) => `${label}`}
@@ -991,15 +968,15 @@ const Dashboard: React.FC<DashboardProps> = ({
                       }}
                       cursor={{ fill: 'rgba(99, 102, 241, 0.05)' }}
                     />
-                    
-                    <Bar 
-                      dataKey="value" 
+
+                    <Bar
+                      dataKey="value"
                       radius={[12, 12, 0, 0]}
                       filter="url(#barShadow)"
                     >
                       {tipoATAData.map((entry, index) => (
-                        <Cell 
-                          key={`cell-${index}`} 
+                        <Cell
+                          key={`cell-${index}`}
                           fill={`url(#gradient-${index})`}
                         />
                       ))}

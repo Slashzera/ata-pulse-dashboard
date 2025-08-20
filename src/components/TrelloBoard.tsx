@@ -45,63 +45,51 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({ board, onBack }) => {
 
   const handleCardMove = async (cardId: string, sourceListId: string, targetListId: string, newPosition: number) => {
     try {
-      console.log('🔄 Iniciando movimentação de cartão:', { cardId, sourceListId, targetListId, newPosition });
+      console.log('🚀 MOVIMENTAÇÃO ULTRA-RÁPIDA de cartão:', { cardId, sourceListId, targetListId, newPosition });
       
+      // Executar movimentação no servidor (a UI já foi atualizada otimisticamente)
       const result = await moveCardToList(cardId, targetListId, newPosition);
       
       if (result && typeof result === 'object' && 'success' in result) {
         if (result.success) {
-          console.log('✅ Cartão movido com sucesso:', result);
+          console.log('✅ Cartão movido no servidor:', result);
+          // Sincronização leve em background (sem bloquear UI)
+          setTimeout(() => fetchBoardDetails(board.id), 1000);
         } else {
           console.error('❌ Erro na movimentação:', result.message || result.error);
           throw new Error(result.message || 'Erro desconhecido na movimentação');
         }
       }
       
-      // Refresh board data após um pequeno delay
-      setTimeout(() => {
-        console.log('🔄 Atualizando dados do quadro...');
-        fetchBoardDetails(board.id);
-      }, 200);
-      
     } catch (error) {
       console.error('❌ Erro ao mover cartão:', error);
       // Refresh imediato em caso de erro para reverter mudanças visuais
-      fetchBoardDetails(board.id);
-      
-      // Opcional: mostrar notificação de erro para o usuário
-      // toast.error('Erro ao mover cartão. Tente novamente.');
+      await fetchBoardDetails(board.id);
     }
   };
 
   const handleCardReorder = async (listId: string, cardId: string, newPosition: number) => {
     try {
-      console.log('🔄 Iniciando reordenação de cartão:', { listId, cardId, newPosition });
+      console.log('🚀 REORDENAÇÃO ULTRA-RÁPIDA de cartão:', { listId, cardId, newPosition });
       
+      // Executar reordenação no servidor (a UI já foi atualizada otimisticamente)
       const result = await moveCardToList(cardId, listId, newPosition);
       
       if (result && typeof result === 'object' && 'success' in result) {
         if (result.success) {
-          console.log('✅ Cartão reordenado com sucesso:', result);
+          console.log('✅ Cartão reordenado no servidor:', result);
+          // Sincronização leve em background (sem bloquear UI)
+          setTimeout(() => fetchBoardDetails(board.id), 1000);
         } else {
           console.error('❌ Erro na reordenação:', result.message || result.error);
           throw new Error(result.message || 'Erro desconhecido na reordenação');
         }
       }
       
-      // Refresh board data após um pequeno delay
-      setTimeout(() => {
-        console.log('🔄 Atualizando dados do quadro...');
-        fetchBoardDetails(board.id);
-      }, 200);
-      
     } catch (error) {
       console.error('❌ Erro ao reordenar cartão:', error);
       // Refresh imediato em caso de erro
-      fetchBoardDetails(board.id);
-      
-      // Opcional: mostrar notificação de erro para o usuário
-      // toast.error('Erro ao reordenar cartão. Tente novamente.');
+      await fetchBoardDetails(board.id);
     }
   };
 

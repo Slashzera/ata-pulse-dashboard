@@ -8,6 +8,7 @@ import ExportCategoryReport from '@/components/ExportCategoryReport';
 import UserManagement from '@/components/UserManagement';
 import ChangePasswordDialog from '@/components/ChangePasswordDialog';
 import TrashManager from '@/components/TrashManager';
+import { NotificationDropdown } from '@/components/NotificationDropdown';
 import { useAtas } from '@/hooks/useAtas';
 import { usePedidos } from '@/hooks/usePedidos';
 
@@ -105,6 +106,9 @@ const Header: React.FC<HeaderProps> = ({ onReturnToMain }) => {
             
             {/* Right section - Actions and user */}
             <div className="flex items-center gap-4">
+              
+              {/* Notifications */}
+              <NotificationDropdown />
               
               {/* Action buttons - hidden on mobile, shown in dropdown */}
               <div className="hidden lg:flex items-center gap-2">

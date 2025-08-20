@@ -8,7 +8,7 @@ import { ATA } from '@/hooks/useAtas';
 import { Pedido, useUpdatePedido } from '@/hooks/usePedidos';
 import PedidoDetailsDialog from '@/components/PedidoDetailsDialog';
 import EditPedidoDialog from '@/components/EditPedidoDialog';
-import CreatePedidoDialog from '@/components/CreatePedidoDialog';
+import ModernCreatePedidoDialog from '@/components/ModernCreatePedidoDialog';
 import DeletePedidoDialog from '@/components/DeletePedidoDialog';
 import SaldoAlert from '@/components/SaldoAlert';
 
@@ -775,7 +775,7 @@ const PedidosSection: React.FC<PedidosSectionProps> = ({ atas, pedidos, selected
         }}
       />
 
-      <CreatePedidoDialog
+      <ModernCreatePedidoDialog
         atas={getCategoryAtasForPedido(selectedCategoryForNewPedido)}
         isOpen={isCreatePedidoDialogOpen}
         onClose={() => {
@@ -783,6 +783,7 @@ const PedidosSection: React.FC<PedidosSectionProps> = ({ atas, pedidos, selected
           setSelectedCategoryForNewPedido('');
         }}
         categoryName={getCategoryName(selectedCategoryForNewPedido)}
+        category={selectedCategoryForNewPedido}
       />
     </>
   );

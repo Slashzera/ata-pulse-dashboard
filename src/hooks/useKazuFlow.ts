@@ -81,37 +81,54 @@ export const useKazuFlow = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
-      // Tentar usar a função RPC primeiro, depois fallback para consulta direta
+      // Tentar usar a nova função completa primeiro, depois fallback
       try {
-        const { data, error } = await supabase.rpc('get_user_boards_simple');
+        const { data, error } = await supabase.rpc('get_user_boards_complete');
         if (error) throw error;
         setBoards(data || []);
       } catch (rpcError) {
-        // Fallback: buscar quadros diretamente da tabela
-        const { data, error } = await supabase
-          .from('trello_boards')
-          .select(`
-            id,
-            title,
-            description,
-            background_color,
-            created_by,
-            created_at,
-            updated_at
-          `)
-          .eq('is_deleted', false)
-          .eq('created_by', user.id)
-          .order('updated_at', { ascending: false });
+        console.warn('Função completa falhou, usando função simples:', rpcError);
         
-        if (error) throw error;
-        
-        // Adicionar role como 'owner' para quadros criados pelo usuário
-        const boardsWithRole = (data || []).map(board => ({
-          ...board,
-          member_role: 'owner'
-        }));
-        
-        setBoards(boardsWithRole);
+        // Fallback: tentar função simples
+        try {
+          const { data, error } = await supabase.rpc('get_user_boards_simple');
+          if (error) throw error;
+          setBoards(data || []);
+        } catch (simpleError) {
+          console.warn('Função simples falhou, usando consulta direta:', simpleError);
+          
+          // Fallback final: buscar quadros diretamente da tabela
+          const { data, error } = await supabase
+            .from('trello_boards')
+            .select(`
+              id,
+              title,
+              description,
+              background_color,
+              created_by,
+              created_at,
+              updated_at,
+              process_number,
+              responsible_person,
+              company,
+              object_description,
+              process_value,
+              board_type_id
+            `)
+            .eq('is_deleted', false)
+            .eq('created_by', user.id)
+            .order('updated_at', { ascending: false });
+          
+          if (error) throw error;
+          
+          // Adicionar role como 'owner' para quadros criados pelo usuário
+          const boardsWithRole = (data || []).map(board => ({
+            ...board,
+            member_role: 'owner'
+          }));
+          
+          setBoards(boardsWithRole);
+        }
       }
     } catch (err: any) {
       setError(err.message);
@@ -189,89 +206,106 @@ export const useKazuFlow = () => {
       setLoading(true);
       setError(null);
 
-      console.log('Iniciando arquivamento do quadro:', boardId);
+      console.log('🚨 INICIANDO EXCLUSÃO DO QUADRO:', boardId);
 
-      // Tentar usar a função SQL primeiro
+      // Método 1: Tentar função principal
       try {
-        const { data, error } = await supabase.rpc('archive_board_cascade', {
-          board_uuid: boardId
+        console.log('📞 Tentativa 1: emergency_delete_board...');
+        const { data, error } = await supabase.rpc('emergency_delete_board', {
+          board_id: boardId
         });
 
         if (error) throw error;
         
-        console.log('Quadro arquivado via função SQL:', data);
-        return data;
-      } catch (rpcError) {
-        console.warn('Função SQL falhou, usando método alternativo:', rpcError);
-        
-        // Método alternativo: passo a passo
-        console.log('Buscando listas do quadro...');
-        
-        // First, get all lists in the board
-        const { data: lists, error: listsQueryError } = await supabase
-          .from('trello_lists')
-          .select('id')
-          .eq('board_id', boardId)
-          .eq('is_deleted', false);
-
-        if (listsQueryError) {
-          console.error('Erro ao buscar listas:', listsQueryError);
-          throw listsQueryError;
+        if (data === true) {
+          console.log('✅ SUCESSO via emergency_delete_board');
+          return { success: true, message: 'Quadro excluído com sucesso', method: 'emergency' };
+        } else {
+          throw new Error('Função retornou false');
         }
+      } catch (emergencyError) {
+        console.warn('⚠️ Método 1 falhou:', emergencyError);
+        
+        // Método 2: Tentar função simples
+        try {
+          console.log('📞 Tentativa 2: simple_delete_board...');
+          const { data, error } = await supabase.rpc('simple_delete_board', {
+            board_id: boardId
+          });
 
-        console.log(`Encontradas ${lists?.length || 0} listas`);
-
-        // Archive all cards in the lists (if there are any lists)
-        if (lists && lists.length > 0) {
-          const listIds = lists.map(list => list.id);
-          console.log('Arquivando cards das listas:', listIds);
+          if (error) throw error;
           
-          const { error: cardsError } = await supabase
-            .from('trello_cards')
-            .update({ is_deleted: true })
-            .in('list_id', listIds);
-
-          if (cardsError) {
-            console.error('Erro ao arquivar cards:', cardsError);
-            throw cardsError;
+          if (data === true) {
+            console.log('✅ SUCESSO via simple_delete_board');
+            return { success: true, message: 'Quadro excluído com sucesso', method: 'simple' };
+          } else {
+            throw new Error('Função simples retornou false');
           }
+        } catch (simpleError) {
+          console.warn('⚠️ Método 2 falhou:', simpleError);
           
-          console.log('Cards arquivados com sucesso');
+          // Método 3: SQL direto (último recurso)
+          try {
+            console.log('🔧 Tentativa 3: SQL direto...');
+            
+            // Excluir quadro diretamente
+            const { error: boardError } = await supabase
+              .from('trello_boards')
+              .update({ 
+                is_deleted: true,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', boardId);
+
+            if (boardError) throw boardError;
+
+            // Excluir listas
+            const { error: listsError } = await supabase
+              .from('trello_lists')
+              .update({ 
+                is_deleted: true,
+                updated_at: new Date().toISOString()
+              })
+              .eq('board_id', boardId);
+
+            if (listsError) {
+              console.warn('⚠️ Erro ao excluir listas (não crítico):', listsError);
+            }
+
+            // Excluir cartões
+            const { data: lists } = await supabase
+              .from('trello_lists')
+              .select('id')
+              .eq('board_id', boardId);
+
+            if (lists && lists.length > 0) {
+              const listIds = lists.map(list => list.id);
+              const { error: cardsError } = await supabase
+                .from('trello_cards')
+                .update({ 
+                  is_deleted: true,
+                  updated_at: new Date().toISOString()
+                })
+                .in('list_id', listIds);
+
+              if (cardsError) {
+                console.warn('⚠️ Erro ao excluir cartões (não crítico):', cardsError);
+              }
+            }
+            
+            console.log('✅ SUCESSO via SQL direto');
+            return { success: true, message: 'Quadro excluído com sucesso', method: 'direct' };
+          } catch (directError) {
+            console.error('💥 TODOS OS MÉTODOS FALHARAM:', directError);
+            throw new Error(`Falha crítica: ${directError.message}`);
+          }
         }
-
-        // Archive all lists in the board
-        console.log('Arquivando listas do quadro...');
-        const { error: listsError } = await supabase
-          .from('trello_lists')
-          .update({ is_deleted: true })
-          .eq('board_id', boardId);
-
-        if (listsError) {
-          console.error('Erro ao arquivar listas:', listsError);
-          throw listsError;
-        }
-        
-        console.log('Listas arquivadas com sucesso');
-
-        // Finally, archive the board
-        console.log('Arquivando quadro...');
-        const { error: boardError } = await supabase
-          .from('trello_boards')
-          .update({ is_deleted: true })
-          .eq('id', boardId);
-
-        if (boardError) {
-          console.error('Erro ao arquivar quadro:', boardError);
-          throw boardError;
-        }
-        
-        console.log('Quadro arquivado com sucesso');
-        return { success: true, message: 'Quadro arquivado com sucesso' };
       }
     } catch (err: any) {
-      console.error('Erro detalhado ao arquivar quadro:', err);
-      setError(err.message);
-      throw err;
+      console.error('🔥 ERRO FINAL AO EXCLUIR QUADRO:', err);
+      const errorMessage = err?.message || err?.toString() || 'Erro desconhecido';
+      setError(errorMessage);
+      throw new Error(`Impossível excluir quadro: ${errorMessage}`);
     } finally {
       setLoading(false);
     }

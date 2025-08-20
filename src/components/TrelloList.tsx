@@ -39,12 +39,34 @@ export const TrelloList: React.FC<TrelloListProps> = ({ list, boardId }) => {
 
   const handleCreateCard = async (cardData: { title: string; description?: string }) => {
     try {
-      await createCard(list.id, cardData.title, cardData.description);
+      console.log('🔄 Criando cartão:', cardData);
+      
+      // ATUALIZAÇÃO OTIMISTA - Adicionar cartão imediatamente na UI
+      const tempCard = {
+        id: `temp-${Date.now()}`,
+        title: cardData.title,
+        description: cardData.description,
+        position: (list.cards?.length || 0),
+        created_by: 'current-user',
+        list_id: list.id
+      };
+      
+      // Atualizar lista local imediatamente
+      list.cards = [...(list.cards || []), tempCard];
+      
       setShowCreateCard(false);
-      // Refresh board data
+      
+      // Criar cartão no servidor em background
+      const newCard = await createCard(list.id, cardData.title, cardData.description);
+      console.log('✅ Cartão criado no servidor:', newCard);
+      
+      // Atualizar com dados reais do servidor
       await fetchBoardDetails(boardId);
+      console.log('✅ Quadro sincronizado com servidor');
     } catch (error) {
-      console.error('Erro ao criar cartão:', error);
+      console.error('❌ Erro ao criar cartão:', error);
+      // Reverter mudança otimista em caso de erro
+      await fetchBoardDetails(boardId);
       alert('Erro ao criar cartão. Tente novamente.');
     }
   };
@@ -52,12 +74,34 @@ export const TrelloList: React.FC<TrelloListProps> = ({ list, boardId }) => {
   const handleQuickAdd = async () => {
     if (quickTitle.trim()) {
       try {
-        await createCard(list.id, quickTitle.trim());
+        console.log('🔄 Criação rápida de cartão:', quickTitle.trim());
+        
+        // ATUALIZAÇÃO OTIMISTA - Adicionar cartão imediatamente na UI
+        const tempCard = {
+          id: `temp-${Date.now()}`,
+          title: quickTitle.trim(),
+          position: (list.cards?.length || 0),
+          created_by: 'current-user',
+          list_id: list.id
+        };
+        
+        // Atualizar lista local imediatamente
+        list.cards = [...(list.cards || []), tempCard];
+        
         setQuickTitle('');
         setShowQuickAdd(false);
+        
+        // Criar cartão no servidor em background
+        const newCard = await createCard(list.id, quickTitle.trim());
+        console.log('✅ Cartão criado rapidamente no servidor:', newCard);
+        
+        // Sincronizar com servidor
         await fetchBoardDetails(boardId);
+        console.log('✅ Quadro sincronizado após criação rápida');
       } catch (error) {
-        console.error('Erro ao criar cartão:', error);
+        console.error('❌ Erro ao criar cartão rapidamente:', error);
+        // Reverter mudança otimista em caso de erro
+        await fetchBoardDetails(boardId);
         alert('Erro ao criar cartão. Tente novamente.');
       }
     }
