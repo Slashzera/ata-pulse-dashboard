@@ -63,7 +63,7 @@ export const useAtas = () => {
       const { data, error } = await supabase
         .from('atas')
         .select('*')
-        .neq('is_deleted', true)
+        .or('is_deleted.is.null,is_deleted.eq.false') // Incluir ATAs onde is_deleted é null ou false
         .order('n_ata', { ascending: true });
       
       if (error) {
@@ -74,8 +74,25 @@ export const useAtas = () => {
       console.log('ATAs encontradas:', data?.length);
       console.log('Primeira ATA:', data?.[0]);
       
+      // Log específico para ATA 085/2025
+      const ata085 = data?.find(ata => ata.n_ata === '085/2025');
+      if (ata085) {
+        console.log('ATA 085/2025 encontrada:', ata085);
+      } else {
+        console.log('ATA 085/2025 NÃO encontrada na lista');
+        // Buscar especificamente a ATA 085/2025 para debug
+        const { data: debugData } = await supabase
+          .from('atas')
+          .select('*')
+          .eq('n_ata', '085/2025');
+        console.log('Debug ATA 085/2025:', debugData);
+      }
+      
       return data as ATA[];
     },
+    // Forçar refetch mais frequente para garantir dados atualizados
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -89,13 +106,18 @@ export const useCreateAta = () => {
       console.log('Criando ATA com categoria:', ata.category);
       
       // Verificar se ATA já existe na mesma categoria (apenas ATAs ativas)
-      const { data: existing } = await supabase
+      const { data: existing, error: checkError } = await supabase
         .from('atas')
-        .select('id')
+        .select('id, n_ata')
         .eq('n_ata', ata.n_ata)
         .eq('category', ata.category)
         .neq('is_deleted', true)
-        .single();
+        .maybeSingle(); // Usar maybeSingle para evitar erro se não encontrar
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('Erro ao verificar ATA existente:', checkError);
+        // Não bloquear a criação por erro de verificação
+      }
 
       if (existing) {
         const categoryNames = {
@@ -104,7 +126,7 @@ export const useCreateAta = () => {
           antigo: 'Contratos Antigos',
           aquisicao: 'Aquisição Global'
         };
-        throw new Error(`❌ Já existe uma ATA com este número na categoria ${categoryNames[ata.category]}!`);
+        throw new Error(`❌ Já existe uma ATA ativa com o número "${ata.n_ata}" na categoria ${categoryNames[ata.category]}!`);
       }
 
       // Calcular data de validade (1 ano a partir da data atual)
@@ -113,11 +135,20 @@ export const useCreateAta = () => {
 
       // Preparar dados para inserção, garantindo que a categoria seja salva corretamente
       const dataToInsert = {
-        ...ata,
-        category: ata.category, // Garantir que a categoria seja explicitamente definida
-        data_validade: dataValidade.toISOString().split('T')[0],
+        n_ata: ata.n_ata,
+        pregao: ata.pregao || '',
+        objeto: ata.objeto || '',
+        processo_adm: ata.processo_adm || '',
+        processo_emp_afo: ata.processo_emp_afo || '',
+        favorecido: ata.favorecido || '',
+        valor: ata.valor || 0,
+        vencimento: ata.vencimento || null,
+        informacoes: ata.informacoes || '',
         saldo_disponivel: ata.saldo_disponivel || ata.valor || 0,
-        vencimento: ata.vencimento || null
+        category: ata.category,
+        data_validade: dataValidade.toISOString().split('T')[0],
+        data_inicio: new Date().toISOString().split('T')[0],
+        is_deleted: false
       };
 
       console.log('Dados a serem inseridos:', dataToInsert);
@@ -130,32 +161,56 @@ export const useCreateAta = () => {
       
       if (error) {
         console.error('Erro ao criar ATA:', error);
-        throw error;
+        
+        // Tratar erros específicos
+        if (error.code === '23505') {
+          throw new Error('❌ Já existe uma ATA com este número. Tente um número diferente.');
+        } else if (error.message.includes('duplicate key')) {
+          throw new Error('❌ Número de ATA duplicado. Use um número único.');
+        } else if (error.message.includes('violates unique constraint')) {
+          throw new Error('❌ Este número de ATA já está em uso. Escolha outro número.');
+        } else {
+          throw new Error(`❌ Erro ao criar ATA: ${error.message}`);
+        }
       }
 
       console.log('ATA criada com sucesso:', data);
 
       // Log de auditoria
-      createAuditLog.mutate({
-        action: 'CREATE',
-        table_name: 'atas',
-        record_id: data.id,
-        new_data: data
-      });
+      try {
+        createAuditLog.mutate({
+          action: 'CREATE',
+          table_name: 'atas',
+          record_id: data.id,
+          new_data: data
+        });
+      } catch (auditError) {
+        console.warn('Erro ao criar log de auditoria:', auditError);
+        // Não falhar a criação da ATA por erro de auditoria
+      }
       
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['atas'] });
       queryClient.invalidateQueries({ queryKey: ['atas-stats'] });
+      
+      const categoryNames = {
+        normal: 'ATA',
+        adesao: 'Adesão',
+        antigo: 'Contrato Antigo',
+        aquisicao: 'Aquisição Global'
+      };
+      
       toast({
-        title: "✅ ATA criada",
-        description: "Nova ATA foi criada com sucesso com validade de 1 ano!",
+        title: "✅ Sucesso!",
+        description: `${categoryNames[data.category]} "${data.n_ata}" foi criada com sucesso!`,
       });
     },
     onError: (error: Error) => {
+      console.error('Erro na criação da ATA:', error);
       toast({
-        title: "❌ Erro",
+        title: "❌ Erro ao criar ATA",
         description: error.message,
         variant: "destructive",
       });

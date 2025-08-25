@@ -699,9 +699,14 @@ const ModernATATable: React.FC<ModernATATableProps> = ({ atas, category, title, 
       {/* Diálogos */}
       {isEditATADialogOpen && selectedAtaToEdit && (
         <EditATADialog
-          ata={selectedAtaToEdit}
+          record={selectedAtaToEdit}
           isOpen={isEditATADialogOpen}
           onClose={closeEditATADialog}
+          onSave={(updatedATA) => {
+            // A atualização será refletida automaticamente via React Query
+            closeEditATADialog();
+          }}
+          categoryName={getCategoryInfo(category).name}
         />
       )}
 
@@ -710,7 +715,7 @@ const ModernATATable: React.FC<ModernATATableProps> = ({ atas, category, title, 
           ata={selectedAtaToDelete}
           isOpen={isDeleteConfirmationOpen}
           onConfirm={confirmDeleteAta}
-          onCancel={cancelDeleteAta}
+          onClose={cancelDeleteAta}
         />
       )}
 

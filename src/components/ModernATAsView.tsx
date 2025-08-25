@@ -13,6 +13,9 @@ import {
 import { ATA, useAtas } from '@/hooks/useAtas';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import EditATADialog from '@/components/EditATADialog';
+import DeleteATADialog from '@/components/DeleteATADialog';
+import DebugATAs from '@/components/DebugATAs';
 
 interface ModernATAsViewProps {
   onBack?: () => void;
@@ -29,6 +32,10 @@ const ModernATAsView: React.FC<ModernATAsViewProps> = ({
   const [categoryFilter, setCategoryFilter] = useState(selectedCategory);
   const [sortBy, setSortBy] = useState('n_ata');
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+  const [editingATA, setEditingATA] = useState<ATA | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [deletingATA, setDeletingATA] = useState<ATA | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const { data: atas = [], isLoading } = useAtas();
 
@@ -229,6 +236,9 @@ const ModernATAsView: React.FC<ModernATAsViewProps> = ({
           </div>
         </div>
 
+        {/* Debug Component - Temporário */}
+        <DebugATAs />
+
         {/* Controles de Pesquisa e Filtros */}
         <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm mb-8">
           <CardContent className="p-6">
@@ -409,6 +419,10 @@ const ModernATAsView: React.FC<ModernATAsViewProps> = ({
                           variant="outline"
                           className="hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 transition-colors"
                           title="Editar ATA"
+                          onClick={() => {
+                            setEditingATA(ata);
+                            setIsEditDialogOpen(true);
+                          }}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -418,6 +432,10 @@ const ModernATAsView: React.FC<ModernATAsViewProps> = ({
                           variant="outline"
                           className="hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors"
                           title="Excluir ATA"
+                          onClick={() => {
+                            setDeletingATA(ata);
+                            setIsDeleteDialogOpen(true);
+                          }}
                         >
                           <Trash className="h-4 w-4" />
                         </Button>
@@ -446,6 +464,41 @@ const ModernATAsView: React.FC<ModernATAsViewProps> = ({
           </div>
         )}
       </div>
+
+      {/* Modal de Edição */}
+      {editingATA && (
+        <EditATADialog
+          record={editingATA}
+          isOpen={isEditDialogOpen}
+          onClose={() => {
+            setIsEditDialogOpen(false);
+            setEditingATA(null);
+          }}
+          onSave={(updatedATA) => {
+            // A atualização será refletida automaticamente via React Query
+            setIsEditDialogOpen(false);
+            setEditingATA(null);
+          }}
+          categoryName={getCategoryConfig(editingATA.category).name}
+        />
+      )}
+
+      {/* Modal de Exclusão */}
+      {deletingATA && (
+        <DeleteATADialog
+          ata={deletingATA}
+          isOpen={isDeleteDialogOpen}
+          onClose={() => {
+            setIsDeleteDialogOpen(false);
+            setDeletingATA(null);
+          }}
+          onConfirm={(justification) => {
+            // A exclusão será refletida automaticamente via React Query
+            setIsDeleteDialogOpen(false);
+            setDeletingATA(null);
+          }}
+        />
+      )}
     </div>
   );
 };
