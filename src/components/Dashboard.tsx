@@ -577,7 +577,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           <Card className="border-l-4 border-l-[#203A8A] bg-gradient-to-br from-[#203A8A]/90 to-[#203A8A]/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white font-semibold">Saldo ATAs Normais</CardTitle>
+              <CardTitle className="text-sm font-medium text-white font-semibold">Saldo Atas de Registro de Preços</CardTitle>
               <FileText className="h-4 w-4 text-white" />
             </CardHeader>
             <CardContent>

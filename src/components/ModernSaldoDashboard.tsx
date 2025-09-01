@@ -72,7 +72,7 @@ const ModernSaldoDashboard: React.FC<ModernSaldoDashboardProps> = ({
   const getCategoryConfig = (category: string) => {
     const configs = {
       normal: {
-        name: 'ATAs Normais',
+        name: 'Atas de Registro de Preços',
         color: 'from-emerald-500 to-green-600',
         bgColor: 'bg-emerald-50',
         textColor: 'text-emerald-700',

@@ -45,25 +45,74 @@ const EditTACDialog: React.FC<EditTACDialogProps> = ({ tac, isOpen, onClose }) =
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!tac) return;
+    if (!tac) {
+      toast({
+        title: "Erro",
+        description: "TAC não encontrado para edição.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validações básicas
+    if (!formData.nome_empresa.trim()) {
+      toast({
+        title: "Erro de validação",
+        description: "Nome da empresa é obrigatório.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.numero_processo.trim()) {
+      toast({
+        title: "Erro de validação",
+        description: "Número do processo é obrigatório.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (formData.valor <= 0) {
+      toast({
+        title: "Erro de validação",
+        description: "Valor deve ser maior que zero.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
+      console.log('Atualizando TAC com dados:', {
+        id: tac.id,
+        ...formData
+      });
+
       await updateTacMutation.mutateAsync({
         id: tac.id,
         ...formData
       });
       
       toast({
-        title: "TAC atualizado com sucesso!",
-        description: "As alterações foram salvas.",
+        title: "✅ TAC atualizado com sucesso!",
+        description: "As alterações foram salvas no sistema.",
       });
       
       onClose();
     } catch (error) {
-      console.error('Erro ao atualizar TAC:', error);
+      console.error('Erro detalhado ao atualizar TAC:', error);
+      
+      let errorMessage = "Ocorreu um erro ao salvar as alterações.";
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
       toast({
-        title: "Erro ao atualizar TAC",
-        description: "Ocorreu um erro ao salvar as alterações.",
+        title: "❌ Erro ao atualizar TAC",
+        description: errorMessage,
         variant: "destructive",
       });
     }

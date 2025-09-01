@@ -217,6 +217,58 @@ const ModernProcessosAdministrativos: React.FC<ModernProcessosAdministrativosPro
     }
   };
 
+  // Função para download de arquivo
+  const handleDownloadFile = async (file: ProcessFile) => {
+    try {
+      console.log('Iniciando download do arquivo:', file.nome_arquivo);
+      
+      // Fazer download do arquivo usando a URL
+      const response = await fetch(file.url_arquivo);
+      
+      if (!response.ok) {
+        throw new Error(`Erro HTTP: ${response.status}`);
+      }
+      
+      const blob = await response.blob();
+      
+      // Criar URL temporária para o blob
+      const url = window.URL.createObjectURL(blob);
+      
+      // Criar elemento de link temporário para download
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = file.nome_arquivo;
+      
+      // Adicionar ao DOM, clicar e remover
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Limpar URL temporária
+      window.URL.revokeObjectURL(url);
+      
+      toast.success(`Download de "${file.nome_arquivo}" iniciado com sucesso!`);
+    } catch (error) {
+      console.error('Erro ao fazer download:', error);
+      toast.error(`Erro ao fazer download do arquivo: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+    }
+  };
+
+  // Função para visualizar arquivo
+  const handleViewFile = async (file: ProcessFile) => {
+    try {
+      console.log('Abrindo arquivo:', file.nome_arquivo);
+      
+      // Abrir arquivo em nova aba
+      window.open(file.url_arquivo, '_blank');
+      
+      toast.success(`Abrindo "${file.nome_arquivo}"`);
+    } catch (error) {
+      console.error('Erro ao abrir arquivo:', error);
+      toast.error(`Erro ao abrir arquivo: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+    }
+  };
+
   // Funções auxiliares (mantendo a funcionalidade original)
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
@@ -520,14 +572,37 @@ const ModernProcessosAdministrativos: React.FC<ModernProcessosAdministrativosPro
                         </div>
                         
                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button size="sm" variant="outline" className="text-blue-600 border-blue-200 hover:bg-blue-50">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewFile(file);
+                            }}
+                            title="Visualizar arquivo"
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button size="sm" variant="outline" className="text-green-600 border-green-200 hover:bg-green-50">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="text-green-600 border-green-200 hover:bg-green-50"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDownloadFile(file);
+                            }}
+                            title="Fazer download"
+                          >
                             <Download className="h-4 w-4" />
                           </Button>
                           {isAdmin && (
-                            <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50">
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-red-600 border-red-200 hover:bg-red-50"
+                              title="Excluir arquivo"
+                            >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           )}
@@ -567,14 +642,37 @@ const ModernProcessosAdministrativos: React.FC<ModernProcessosAdministrativosPro
                         </div>
                         
                         <div className="flex items-center gap-2">
-                          <Button size="sm" variant="ghost" className="text-blue-600 hover:bg-blue-50">
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            className="text-blue-600 hover:bg-blue-50"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewFile(file);
+                            }}
+                            title="Visualizar arquivo"
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button size="sm" variant="ghost" className="text-green-600 hover:bg-green-50">
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            className="text-green-600 hover:bg-green-50"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDownloadFile(file);
+                            }}
+                            title="Fazer download"
+                          >
                             <Download className="h-4 w-4" />
                           </Button>
                           {isAdmin && (
-                            <Button size="sm" variant="ghost" className="text-red-600 hover:bg-red-50">
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="text-red-600 hover:bg-red-50"
+                              title="Excluir arquivo"
+                            >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           )}

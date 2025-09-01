@@ -467,7 +467,7 @@ const ExportCategoryReport: React.FC<ExportCategoryReportProps> = ({ atas, pedid
           </head>
           <body>
             <div class="header">
-              <h1>SisGecon Saúde - Relatório de Saldos por Categoria</h1>
+              <h1>Relatório de Saldos por Categoria</h1>
               <p><strong>${reportTitle}</strong></p>
               <p>Gerado em: ${new Date().toLocaleString('pt-BR')}</p>
             </div>
@@ -605,7 +605,6 @@ const ExportCategoryReport: React.FC<ExportCategoryReportProps> = ({ atas, pedid
             </div>
 
             <div class="footer">
-              <p><strong>Sistema de Gestão e Contratos - SisGecon Saúde</strong></p>
               <p>Secretaria Municipal de Saúde de Duque de Caxias</p>
               <p>Relatório de Saldos por Categoria e Favorecido</p>
             </div>

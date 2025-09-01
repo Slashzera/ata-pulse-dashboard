@@ -279,7 +279,6 @@ const ExportToPDF: React.FC<ExportToPDFProps> = ({ atas, pedidos }) => {
           ` : ''}
 
           <div class="footer">
-            <p>Sistema de Contratos - SisGecon Saúde</p>
             <p>Secretaria Municipal de Saúde de Duque de Caxias</p>
             ${filters.includeAtas ? `<p><strong>Total de Saldo Disponível: ${totalSaldoDisponivel <= 0 ? 'SALDO ZERADO' : formatCurrency(totalSaldoDisponivel)}</strong></p>` : ''}
           </div>

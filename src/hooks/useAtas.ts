@@ -121,7 +121,7 @@ export const useCreateAta = () => {
 
       if (existing) {
         const categoryNames = {
-          normal: 'ATAs normais',
+          normal: 'Atas de Registro de Preços',
           adesao: 'Adesões',
           antigo: 'Contratos Antigos',
           aquisicao: 'Aquisição Global'
@@ -176,18 +176,20 @@ export const useCreateAta = () => {
 
       console.log('ATA criada com sucesso:', data);
 
-      // Log de auditoria
-      try {
-        createAuditLog.mutate({
-          action: 'CREATE',
-          table_name: 'atas',
-          record_id: data.id,
-          new_data: data
-        });
-      } catch (auditError) {
-        console.warn('Erro ao criar log de auditoria:', auditError);
-        // Não falhar a criação da ATA por erro de auditoria
-      }
+      // Log de auditoria (assíncrono para não bloquear)
+      setTimeout(() => {
+        try {
+          createAuditLog.mutate({
+            action: 'CREATE',
+            table_name: 'atas',
+            record_id: data.id,
+            new_data: data
+          });
+        } catch (auditError) {
+          console.warn('Erro ao criar log de auditoria:', auditError);
+          // Não falhar a criação da ATA por erro de auditoria
+        }
+      }, 100);
       
       return data;
     },

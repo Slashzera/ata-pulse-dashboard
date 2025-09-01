@@ -98,7 +98,7 @@ const ModernCreatePedidoDialog: React.FC<ModernCreatePedidoDialogProps> = ({
     switch (category) {
       case 'normal':
         return { 
-          name: 'ATAs Normais', 
+          name: 'Atas de Registro de Preços', 
           color: 'from-blue-600 to-indigo-600',
           icon: FileText,
           bgColor: 'bg-blue-50',

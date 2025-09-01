@@ -149,7 +149,7 @@ const BackupDialog: React.FC<BackupDialogProps> = ({
           </table>
 
           <div class="footer">
-            <p>Sistema de Contratos - Backup Completo</p>
+            <p>Backup Completo</p>
             <p>Total de Saldo Disponível: <strong>${formatCurrency(totalSaldoDisponivel)}</strong></p>
           </div>
         </body>

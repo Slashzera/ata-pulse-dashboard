@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import Trash from "./pages/Trash";
 import SQLEditorPage from "./pages/SQLEditor";
 import NotFound from "./pages/NotFound";
+import InactivityManager from "./components/InactivityManager";
 
 const queryClient = new QueryClient();
 
@@ -17,6 +18,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <InactivityManager />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />

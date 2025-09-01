@@ -140,7 +140,7 @@ const ModernATATable: React.FC<ModernATATableProps> = ({ atas, category, title, 
     switch (category) {
       case 'normal':
         return { 
-          name: 'ATAs Normais', 
+          name: 'Atas de Registro de Preços', 
           color: 'from-blue-600 to-indigo-600',
           icon: FileText,
           description: 'Contratos de fornecimento padrão'

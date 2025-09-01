@@ -54,33 +54,42 @@ const ModernCreateATADialog: React.FC<ModernCreateATADialogProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('Iniciando criação de ATA:', { ...formData, category });
+    
     createAtaMutation.mutate({
       ...formData,
       category: category
+    }, {
+      onSuccess: (data) => {
+        console.log('ATA criada com sucesso:', data);
+        // Limpar formulário
+        setFormData({
+          n_ata: '',
+          pregao: '',
+          objeto: '',
+          processo_adm: '',
+          processo_emp_afo: '',
+          favorecido: '',
+          valor: 0,
+          vencimento: '',
+          informacoes: '',
+          saldo_disponivel: 0
+        });
+        // Fechar modal
+        onClose();
+      },
+      onError: (error) => {
+        console.error('Erro ao criar ATA:', error);
+        // Modal permanece aberto para o usuário tentar novamente
+      }
     });
-
-    if (!createAtaMutation.isError) {
-      onClose();
-      setFormData({
-        n_ata: '',
-        pregao: '',
-        objeto: '',
-        processo_adm: '',
-        processo_emp_afo: '',
-        favorecido: '',
-        valor: 0,
-        vencimento: '',
-        informacoes: '',
-        saldo_disponivel: 0
-      });
-    }
   };
 
   const getCategoryInfo = (category: string) => {
     switch (category) {
       case 'normal':
         return { 
-          name: 'Nova ATA Normal', 
+          name: 'Nova Ata de Registro de Preços', 
           description: 'Contrato de fornecimento padrão',
           color: 'from-blue-600 to-indigo-600',
           icon: FileText,

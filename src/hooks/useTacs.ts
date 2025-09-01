@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client'; // Caminho corrigido
 import { v4 as uuidv4 } from 'uuid';
 
 export interface TAC {
-  id: number;
+  id: string;
   created_at: string;
   nome_empresa: string;
   numero_processo: string;
@@ -42,7 +42,7 @@ export function useTacs() {
 export function useDeleteTac() {
   const queryClient = useQueryClient();
 
-  return useMutation<void, Error, { id: number; arquivo_url: string }>({
+  return useMutation<void, Error, { id: string; arquivo_url: string }>({
     mutationFn: async ({ id, arquivo_url }) => {
       if (arquivo_url) {
         const { error: storageError } = await supabase.storage.from('tacs').remove([arquivo_url]);
@@ -167,7 +167,7 @@ export function useUpdateTac() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (updatedTac: {
-      id: number;
+      id: string;
       nome_empresa: string;
       numero_processo: string;
       data_entrada: string;
@@ -176,29 +176,69 @@ export function useUpdateTac() {
       valor: number;
       unidade_beneficiada: string;
     }) => {
+      console.log('Iniciando atualização do TAC:', updatedTac);
+
+      // Verificar se o TAC existe antes de tentar atualizar
+      const { data: existingTac, error: checkError } = await supabase
+        .from('tacs')
+        .select('id')
+        .eq('id', updatedTac.id)
+        .single();
+
+      if (checkError) {
+        console.error('Erro ao verificar TAC existente:', checkError);
+        throw new Error(`TAC não encontrado: ${checkError.message}`);
+      }
+
+      if (!existingTac) {
+        throw new Error('TAC não encontrado no sistema');
+      }
+
+      // Preparar dados para atualização
+      const updateData = {
+        nome_empresa: updatedTac.nome_empresa.trim(),
+        numero_processo: updatedTac.numero_processo.trim(),
+        data_entrada: updatedTac.data_entrada,
+        assunto_objeto: updatedTac.assunto_objeto.trim(),
+        n_notas: Number(updatedTac.n_notas),
+        valor: Number(updatedTac.valor),
+        unidade_beneficiada: updatedTac.unidade_beneficiada.trim(),
+        updated_at: new Date().toISOString()
+      };
+
+      console.log('Dados preparados para atualização:', updateData);
+
       const { data, error } = await supabase
         .from('tacs')
-        .update({
-          nome_empresa: updatedTac.nome_empresa,
-          numero_processo: updatedTac.numero_processo,
-          data_entrada: updatedTac.data_entrada,
-          assunto_objeto: updatedTac.assunto_objeto,
-          n_notas: updatedTac.n_notas,
-          valor: updatedTac.valor,
-          unidade_beneficiada: updatedTac.unidade_beneficiada,
-        })
+        .update(updateData)
         .eq('id', updatedTac.id)
         .select()
         .single();
 
       if (error) {
-        console.error('Erro ao atualizar TAC:', error);
-        throw new Error(`Erro ao atualizar TAC: ${error.message}`);
+        console.error('Erro detalhado ao atualizar TAC:', error);
+        
+        // Tratar diferentes tipos de erro
+        if (error.code === 'PGRST116') {
+          throw new Error('TAC não encontrado para atualização');
+        } else if (error.code === '23505') {
+          throw new Error('Já existe um TAC com estes dados');
+        } else if (error.message.includes('permission')) {
+          throw new Error('Você não tem permissão para editar este TAC');
+        } else {
+          throw new Error(`Erro ao atualizar TAC: ${error.message}`);
+        }
       }
+
+      console.log('TAC atualizado com sucesso:', data);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Invalidando queries após sucesso');
       queryClient.invalidateQueries({ queryKey: ['tacs'] });
+    },
+    onError: (error) => {
+      console.error('Erro na mutation de atualização:', error);
     },
   });
 }

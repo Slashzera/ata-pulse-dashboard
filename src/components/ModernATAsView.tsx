@@ -16,6 +16,7 @@ import { ptBR } from 'date-fns/locale';
 import EditATADialog from '@/components/EditATADialog';
 import DeleteATADialog from '@/components/DeleteATADialog';
 import DebugATAs from '@/components/DebugATAs';
+import DebugATACreation from '@/components/DebugATACreation';
 
 interface ModernATAsViewProps {
   onBack?: () => void;
@@ -114,7 +115,7 @@ const ModernATAsView: React.FC<ModernATAsViewProps> = ({
   const getCategoryConfig = (category: string) => {
     const configs = {
       normal: {
-        name: 'ATAs Normais',
+        name: 'Atas de Registro de Preços',
         color: 'from-emerald-500 to-green-600',
         bgColor: 'bg-emerald-50',
         textColor: 'text-emerald-700',
@@ -262,7 +263,7 @@ const ModernATAsView: React.FC<ModernATAsViewProps> = ({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas as Categorias</SelectItem>
-                    <SelectItem value="normal">ATAs Normais</SelectItem>
+                    <SelectItem value="normal">Atas de Registro de Preços</SelectItem>
                     <SelectItem value="adesao">Adesões</SelectItem>
                     <SelectItem value="antigo">Contratos Antigos</SelectItem>
                     <SelectItem value="aquisicao">Aquisição Global</SelectItem>

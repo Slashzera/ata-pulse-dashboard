@@ -190,4 +190,4 @@ SELECT
     COUNT(*) as total_boards,
     COUNT(DISTINCT CONCAT(title, '|', created_by::text, '|', DATE(created_at)::text)) as unique_combinations
 FROM trello_boards 
-WHERE is_deleted = false;
+WHERE is_deleted = false;psql -d sua_database -f fix-board-duplication-corrected.sql

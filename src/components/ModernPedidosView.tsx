@@ -134,7 +134,7 @@ const ModernPedidosView: React.FC<ModernPedidosViewProps> = ({
   const getCategoryConfig = (category: string) => {
     const configs = {
       normal: {
-        name: 'ATAs Normais',
+        name: 'Atas de Registro de Preços',
         color: 'from-emerald-500 to-green-600',
         bgColor: 'bg-emerald-50',
         textColor: 'text-emerald-700',
@@ -316,7 +316,7 @@ const ModernPedidosView: React.FC<ModernPedidosViewProps> = ({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas Categorias</SelectItem>
-                    <SelectItem value="normal">ATAs Normais</SelectItem>
+                    <SelectItem value="normal">Atas de Registro de Preços</SelectItem>
                     <SelectItem value="adesao">Adesões</SelectItem>
                     <SelectItem value="antigo">Contratos Antigos</SelectItem>
                     <SelectItem value="aquisicao">Aquisição Global</SelectItem>
