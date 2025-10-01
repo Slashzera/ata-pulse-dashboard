@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => ({
   preview: {
     host: "0.0.0.0",       // aceita conexões externas no container
     port: 3000,            // porta do preview
-    allowedHosts: ["*"],   // libera qualquer host (sslip.io incluso)
+    allowedHosts: ["kw8k0w4swko04ococo8kwo08.157.90.31.2.sslip.io"],   // libera qualquer host (sslip.io incluso)
   },
   plugins: [
     react(),
