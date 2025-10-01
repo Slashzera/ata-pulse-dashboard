@@ -1,0 +1,17 @@
+{
+  "phases": {
+    "setup": {
+      "nixPkgs": ["nodejs", "npm"],
+      "aptPkgs": ["curl", "wget"]
+    },
+    "install": {
+      "cmds": ["npm install"]
+    },
+    "build": {
+      "cmds": ["npm run build"]
+    }
+  },
+  "start": {
+    "cmd": "npm run preview"
+  }
+}
