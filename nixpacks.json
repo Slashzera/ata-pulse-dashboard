@@ -1,7 +1,7 @@
 {
   "phases": {
     "setup": {
-      "nixPkgs": ["nodejs", "npm"],
+      "nixPkgs": ["nodejs"],
       "aptPkgs": ["curl", "wget"]
     },
     "install": {
@@ -12,6 +12,6 @@
     }
   },
   "start": {
-    "cmd": "npm run preview"
+    "cmd": "npm run preview -- --port ${PORT:-3000} --host 0.0.0.0"
   }
 }
